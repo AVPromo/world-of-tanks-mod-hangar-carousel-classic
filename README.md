@@ -10,9 +10,17 @@ The main difference is modern WoT 2.x compatibility plus much finer sorting cont
 ## Current Status
 
 - Version: 1.0.1
+- Latest release: [v1.0.1](https://github.com/ticzz/world-of-tanks-mod-hangar-carousel-classic/releases/tag/v1.0.1)
+- Full changelog: [GitHub Releases](https://github.com/ticzz/world-of-tanks-mod-hangar-carousel-classic/releases)
 - Mod ID: hangar.carousel.classic
 - Python runtime: WoT embedded Python 2.7
 - Security/quality: see [EXECUTIVE_SUMMARY.md](EXECUTIVE_SUMMARY.md) and [SECURITY_AUDIT_REPORT.md](SECURITY_AUDIT_REPORT.md)
+
+## Release Highlights (v1.0.1)
+
+- Gameface namespace and mod identity were unified to `hcc` / `hangar.carousel.classic`.
+- Frontend row handling was aligned with the Plus-style behavior (no Classic-only 1/2-row CSS path, no extra JS 3/4-row branch).
+- Build and validation scripts were updated to the new namespace and package layout.
 
 ## What This Mod Does
 
@@ -140,20 +148,10 @@ Runtime state path:
 
 Legacy fallback paths are read when present, then migrated.
 
-## Filter Synchronization Update
+## Changelog Policy
 
-The client-side filter override issue has been addressed in the native carousel patch flow.
-
-What was changed:
-
-- HCC filtered vehicle IDs are now re-applied after native list rebuilds.
-- Re-application is done against both vehicle ID and inventory ID mappings.
-- This prevents native refresh passes from silently reintroducing vehicles that HCC filtering already excluded.
-
-Scope:
-
-- Only filtering synchronization behavior was adjusted.
-- Sorting logic and sorting criteria behavior were intentionally left unchanged.
+- README contains only short release highlights.
+- Full per-release details are published on [GitHub Releases](https://github.com/ticzz/world-of-tanks-mod-hangar-carousel-classic/releases).
 
 ## Build and Validation
 
@@ -176,13 +174,13 @@ Recommended workflow if you want to build and verify the mod yourself:
 3. Validate the package. This checks that the archive contains the required assets, that the bytecode is Python 2.7 compatible, and that the native bundle markers are present.
 
 ```powershell
-./tools/validate.ps1 -PackagePath ./dist/mod_hangar_carousel_classic_1.0.0.wotmod
+./tools/validate.ps1 -PackagePath ./dist/mod_hangar_carousel_classic_1.0.1.wotmod
 ```
 
 4. Install the package into your World of Tanks client. Replace `G:/Games/World_of_Tanks_EU` with your own game folder if needed.
 
 ```powershell
-./tools/install.ps1 -GameRoot G:/Games/World_of_Tanks_EU -PackagePath ./dist/mod_hangar_carousel_classic_1.0.0.wotmod
+./tools/install.ps1 -GameRoot G:/Games/World_of_Tanks_EU -PackagePath ./dist/mod_hangar_carousel_classic_1.0.1.wotmod
 ```
 
 Notes:
