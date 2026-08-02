@@ -5,7 +5,7 @@ Classic-style hangar carousel mod for World of Tanks 2.x with native Gameface in
 This project extends the original Hangar Carousel Plus idea from RCooLeR:
 https://github.com/RCooLeR/WoT-Hangar-carousel-plus
 
-The main difference is modern WoT 2.x compatibility plus much finer sorting control: multi-level hierarchy, optional reverse order per criterion, and explicit nation/type priority layers.
+The main difference is a much finer sorting control: multi-level hierarchy, optional reverse order per criterion, and explicit nation/type priority layers.
 
 ## Current Status
 
@@ -14,6 +14,7 @@ The main difference is modern WoT 2.x compatibility plus much finer sorting cont
 - Full changelog: [GitHub Releases](https://github.com/ticzz/world-of-tanks-mod-hangar-carousel-classic/releases)
 - Mod ID: hangar.carousel.classic
 - Python runtime: WoT embedded Python 2.7
+- Latest compatible Game/Client version: 2.3.1.0
 - Security/quality: see [EXECUTIVE_SUMMARY.md](EXECUTIVE_SUMMARY.md) and [SECURITY_AUDIT_REPORT.md](SECURITY_AUDIT_REPORT.md)
 
 ## Release Highlights (v1.0.1)
