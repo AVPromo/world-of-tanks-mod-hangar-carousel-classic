@@ -63,7 +63,7 @@ $replacements = @(
     ),
     @(
         'o=(s?u(s.list):h()).filter(s=>!1!==i.has(s.id)&&(!!Nr(e,s,a.requires.statistic.model.get(s.id))&&jr(t,s)));r(()=>n.set(o))',
-        'o=(s?u(s.list):h()).filter(s=>!1!==i.has(s.id)&&(!!Nr(e,s,a.requires.statistic.model.get(s.id))&&jr(t,s)));const hcc=(()=>{try{return JSON.parse(a.requires.filters.model.hccSortJson.get()||"{}")}catch(e){return{}}})(),hccValues=hcc.values||{};o.sort((e,t)=>{const a=hccValues[String(e.id)]||hccValues[e.id]||hccValues[String(e.inventoryId)]||hccValues[e.inventoryId]||[],s=hccValues[String(t.id)]||hccValues[t.id]||hccValues[String(t.inventoryId)]||hccValues[t.inventoryId]||[],n=Math.max(a.length,s.length);for(let e=0;e<n;e++){const t=Number(a[e]??0),n=Number(s[e]??0);if(t!==n)return t<n?-1:1}return 0}),r(()=>n.set(o))'
+        'o=(s?u(s.list):h()).filter(s=>!1!==i.has(s.id)&&(!!Nr(e,s,a.requires.statistic.model.get(s.id))&&jr(t,s)));const hcc=(()=>{try{return JSON.parse(a.requires.filters.model.hccSortJson.get()||"{}")}catch(e){return{}}})(),hccValues=hcc.values||{},hccAllowed=new Set((hcc.allowed||[]).map(e=>String(e)));hcc.filtered&&o.splice(0,o.length,...o.filter(e=>hccAllowed.has(String(e.id))||hccAllowed.has(String(e.inventoryId)))),o.sort((e,t)=>{const a=hccValues[String(e.id)]||hccValues[e.id]||hccValues[String(e.inventoryId)]||hccValues[e.inventoryId]||[],s=hccValues[String(t.id)]||hccValues[t.id]||hccValues[String(t.inventoryId)]||hccValues[t.inventoryId]||[],n=Math.max(a.length,s.length);for(let e=0;e<n;e++){const t=Number(a[e]??0),n=Number(s[e]??0);if(t!==n)return t<n?-1:1}return 0}),r(()=>n.set(o))'
     ),
     @(
         'carouselTypeChange:n.createCallback(e=>({rowCount:e}),"onCarouselTypeChange")',
