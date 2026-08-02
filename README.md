@@ -186,7 +186,7 @@ Recommended workflow if you want to build and verify the mod yourself:
 
 Notes:
 
-- If you do not trust [the prebuilt `.wotmod` you can downlod right here](https://github.com/ticzz/world-of-tanks-mod-hangar-carousel-classic/releases/download/v1.0.1/mod_hangar_carousel_classic_1.0.1.wotmod), run the build locally and install the package from `dist/`.
+- If you do not trust [the prebuilt ".wotmod" you can downlod right here](https://github.com/ticzz/world-of-tanks-mod-hangar-carousel-classic/releases/download/v1.0.1/mod_hangar_carousel_classic_1.0.1.wotmod), run the build locally and install the package from `dist/`.
 - Build enforces Python 2.7 bytecode compatibility.
 - Packaging keeps entries uncompressed as required for .wotmod compatibility.
 - Validation checks required assets and native patch markers.
