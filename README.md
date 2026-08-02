@@ -1,11 +1,11 @@
 # Hangar Carousel Classic (World of Tanks Mod)
 
-A classic-style hangar carousel mod for World of Tanks 2.x with native Gameface integration, custom card statistics, and advanced hierarchical sorting.
+Classic-style hangar carousel mod for World of Tanks 2.x with native Gameface integration, custom card statistics, and advanced hierarchical sorting.
 
-This project is an improved and extended variant of the original idea from RCooLeR:
+This project extends the original Hangar Carousel Plus idea from RCooLeR:
 https://github.com/RCooLeR/WoT-Hangar-carousel-plus
 
-Core difference: this mod focuses on modern WoT 2.x compatibility and exposes significantly expanded sorting control (multi-level hierarchy with optional reverse order per criterion), which is the main upgrade path over the original carousel-plus concept.
+The main difference is modern WoT 2.x compatibility plus much finer sorting control: multi-level hierarchy, optional reverse order per criterion, and explicit nation/type priority layers.
 
 ## Current Status
 
@@ -164,25 +164,30 @@ Project scripts:
 - [tools/validate.ps1](tools/validate.ps1)
 - [tools/package_wotmod.py](tools/package_wotmod.py)
 
-Typical flow (PowerShell):
+Recommended workflow if you want to build and verify the mod yourself:
 
-1. Build package
+1. Open PowerShell and switch to the repository folder.
+2. Run the build script. It compiles the Python 2.7 mod, stages the Gameface assets, patches the native bundles, and creates the final `.wotmod` file in `dist/`.
+
 ```powershell
 ./tools/build.ps1
 ```
 
-2. Validate package
+3. Validate the package. This checks that the archive contains the required assets, that the bytecode is Python 2.7 compatible, and that the native bundle markers are present.
+
 ```powershell
 ./tools/validate.ps1 -PackagePath ./dist/mod_hangar_carousel_classic_1.0.0.wotmod
 ```
 
-3. Install into WoT client
+4. Install the package into your World of Tanks client. Replace `G:/Games/World_of_Tanks_EU` with your own game folder if needed.
+
 ```powershell
 ./tools/install.ps1 -GameRoot G:/Games/World_of_Tanks_EU -PackagePath ./dist/mod_hangar_carousel_classic_1.0.0.wotmod
 ```
 
 Notes:
 
+- If you do not trust the prebuilt `.wotmod`, run the build locally and install the package from `dist/`.
 - Build enforces Python 2.7 bytecode compatibility.
 - Packaging keeps entries uncompressed as required for .wotmod compatibility.
 - Validation checks required assets and native patch markers.
@@ -215,8 +220,8 @@ Notes:
 
 ## Credits
 
-- Original concept and inspiration: RCooLeR carousel-plus project
-- This repository: modernized and extended classic carousel workflow for WoT 2.x
+- Original concept and inspiration: [RCooLeR / WoT-Hangar-carousel-plus](https://github.com/RCooLeR/WoT-Hangar-carousel-plus)
+- This repository: a modernized hangar carousel workflow for WoT 2.x with native Gameface integration and extended sorting control
 
 ## Disclaimer
 
