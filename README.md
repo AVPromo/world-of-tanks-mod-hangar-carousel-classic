@@ -19,7 +19,7 @@ The main difference is modern WoT 2.x compatibility plus much finer sorting cont
 ## Release Highlights (v1.0.1)
 
 - Gameface namespace and mod identity were unified to `hcc` / `hangar.carousel.classic`.
-- Frontend row handling was aligned with the Plus-style behavior (no Classic-only 1/2-row CSS path, no extra JS 3/4-row branch).
+- Frontend row handling was rolled back to old behavior (no 1/2-row CSS path, no extra JS 3/4-row branch).
 - Build and validation scripts were updated to the new namespace and package layout.
 
 ## What This Mod Does
