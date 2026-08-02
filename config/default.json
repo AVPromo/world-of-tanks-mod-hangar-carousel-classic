@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 5,
+  "enabled": true,
+  "tankfilters": {
+    "bonus": { "enabled": true },
+    "favorite": { "enabled": true },
+    "elite": { "enabled": true },
+    "premium": { "enabled": true },
+    "non_elite": { "enabled": false },
+    "not_ready": { "enabled": false },
+    "marks_incomplete": { "enabled": false },
+    "crew_not_maxed": { "enabled": false }
+  },
+  "cardStats": {
+    "enabled": true,
+    "fields": ["battles", "winRate", "averageDamage", "mastery", "marksOnGun"],
+    "minimumBattles": 1
+  },
+  "sorting": {
+    "enabled": true,
+    "nations_order": [],
+    "types_order": [],
+    "available_criteria": [
+      "nation",
+      "type",
+      "level",
+      "-level",
+      "maxBattleTier",
+      "-maxBattleTier",
+      "premium",
+      "-premium",
+      "battles",
+      "-battles",
+      "winRate",
+      "-winRate",
+      "markOfMastery",
+      "-markOfMastery",
+      "damageRating",
+      "-damageRating",
+      "marksOnGun",
+      "-marksOnGun",
+      "battlePassPoints",
+      "-battlePassPoints"
+    ],
+    "sorting_criteria": ["nation", "type", "level"]
+  },
+  "actionCards": {
+    "hideBuyTank": false,
+    "hideBuySlot": false,
+    "hideRestoreTank": false
+  },
+  "debug": false
+}

@@ -1,0 +1,16 @@
+# Build outputs
+build/
+dist/
+
+# Local tooling/cache
+.tools/cache/
+.tools/python27/
+
+# Packaged artifacts
+*.wotmod
+*.zip
+
+# Python noise
+__pycache__/
+*.pyc
+*.pyo

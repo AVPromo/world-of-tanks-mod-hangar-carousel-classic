@@ -1,0 +1,478 @@
+.hcc-native-section {
+  margin-top: 9rem;
+  padding-top: 7rem;
+  border-top: 1rem solid rgba(255, 255, 255, 0.12);
+  color: #e9e2d0;
+  font-family: "Roboto Condensed", Arial, sans-serif;
+  pointer-events: auto;
+}
+
+.hcc-native-heading {
+  margin: 0 0 5rem;
+  color: #8c897f;
+  font-size: 11rem;
+  line-height: 14rem;
+  text-transform: uppercase;
+}
+
+.hcc-native-heading:not(:first-child) {
+  margin-top: 8rem;
+}
+
+.hcc-native-filters,
+.hcc-native-sorting,
+.hcc-native-carousel-rows {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 3rem;
+}
+
+.hcc-native-filter,
+.hcc-native-icon-button,
+.hcc-native-row-button {
+  box-sizing: border-box;
+  display: flex;
+  flex: 0 0 28rem;
+  align-items: center;
+  justify-content: center;
+  width: 28rem;
+  height: 28rem;
+  padding: 0;
+  border: 1rem solid rgba(255, 255, 255, 0.17);
+  border-radius: 2rem;
+  background: rgba(15, 17, 20, 0.74);
+  color: #fff;
+  font-family: "Roboto Condensed", Arial, sans-serif;
+  font-size: 14rem;
+  line-height: 1;
+  text-shadow: 0 1rem 2rem #000;
+  cursor: pointer;
+}
+
+.hcc-native-sort-button {
+  box-sizing: border-box;
+  display: flex;
+  flex: 0 0 32rem;
+  align-items: center;
+  justify-content: center;
+  width: 32rem;
+  height: 28rem;
+  padding: 0;
+  border: 1rem solid rgba(255, 255, 255, 0.17);
+  border-radius: 2rem;
+  background: rgba(15, 17, 20, 0.74);
+  color: #fff;
+  font-family: "Roboto Condensed", Arial, sans-serif;
+  font-size: 12rem;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.hcc-native-sort-button:hover {
+  border-color: rgba(255, 193, 96, 0.7);
+  background: rgba(81, 59, 30, 0.9);
+  color: #fff;
+}
+
+.hcc-native-sort-button--active {
+  border-color: #d69a42;
+  background: rgba(110, 72, 27, 0.94);
+  color: #fff;
+}
+
+.hcc-native-sort-direction {
+  margin-left: 3rem;
+  font-size: 18rem;
+}
+
+.hcc-hide-buy-tank [data-test-id="buyTank"],
+.hcc-hide-buy-slot [data-test-id="buySlot"],
+.hcc-hide-restore-tank [data-test-id="restoreTank"] {
+  display: none !important;
+}
+
+.hcc-native-filter {
+  flex-basis: 34rem;
+  width: 34rem;
+  height: 32rem;
+}
+
+.hcc-native-row-button {
+  flex-basis: 42rem;
+  width: 42rem;
+  gap: 3rem;
+  font-size: 15rem;
+  font-weight: 600;
+  text-shadow: none;
+}
+
+.hcc-native-row-button svg {
+  flex: 0 0 16rem;
+  width: 16rem;
+  height: 18rem;
+  fill: #fff !important;
+}
+
+.hcc-native-row-button svg * {
+  fill: #fff !important;
+  stroke: none !important;
+}
+
+.hcc-native-row-button-label {
+  min-width: 9rem;
+  color: #fff !important;
+  font-size: 13rem;
+  line-height: 18rem;
+  text-align: center;
+  text-shadow: none !important;
+}
+
+.hcc-native-sort-svg {
+  width: 19rem;
+  height: 19rem;
+  color: #fff !important;
+  fill: none !important;
+  stroke: #fff !important;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.hcc-native-sort-button .hcc-native-sort-svg * {
+  fill: none !important;
+  stroke: #fff !important;
+}
+
+.hcc-native-filter svg {
+  width: 21rem;
+  height: 21rem;
+  fill: none;
+  stroke: #fff;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.hcc-native-filter:hover,
+.hcc-native-icon-button:hover,
+.hcc-native-row-button:hover {
+  border-color: rgba(255, 193, 96, 0.7);
+  background: rgba(81, 59, 30, 0.9);
+  color: #fff;
+}
+
+.hcc-native-filter--active,
+.hcc-native-icon-button--active,
+.hcc-native-row-button--active {
+  border-color: #d69a42;
+  background: rgba(110, 72, 27, 0.94);
+  box-shadow: inset 0 0 8rem rgba(255, 184, 73, 0.2);
+  color: #ffe3a6;
+}
+
+.hcc-native-filter--active:hover,
+.hcc-native-icon-button--active:hover,
+.hcc-native-row-button--active:hover {
+  color: #fff;
+}
+
+.hcc-native-filter:hover svg,
+.hcc-native-filter--active:hover svg {
+  stroke: #fff;
+}
+
+.hcc-native-filter--active svg {
+  stroke: #fff;
+}
+
+.hcc-native-filter--active:hover svg {
+  stroke: #fff;
+}
+
+/* WoT's global SVG/button rules are loaded after mod styles. Target the
+   actual glyph nodes so filter and sorting icons stay white off-hover too. */
+.hcc-native-filter,
+.hcc-native-icon-button,
+.hcc-native-sort-button {
+  color: #fff !important;
+}
+
+.hcc-native-filter svg,
+.hcc-native-filter svg * {
+  color: #fff !important;
+  fill: none !important;
+  stroke: #fff !important;
+}
+
+.hcc-native-filter:disabled,
+.hcc-native-icon-button:disabled,
+.hcc-native-row-button:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+
+.hcc-hover-tooltip {
+  box-sizing: border-box;
+  min-width: 220rem;
+  max-width: 340rem;
+  padding: 10rem 13rem;
+  border: 1rem solid rgba(230, 202, 151, 0.48);
+  border-radius: 2rem;
+  background: rgba(9, 11, 14, 0.97);
+  box-shadow: 0 3rem 12rem rgba(0, 0, 0, 0.72);
+  color: #f2eee5;
+  font-size: 15rem;
+  line-height: 19rem;
+  pointer-events: none;
+  position: fixed;
+  text-shadow: 0 1rem 2rem #000;
+  transform: translateY(-50%);
+  z-index: 100002;
+}
+
+.hcc-hover-tooltip-title {
+  color: #fff4df;
+  font-size: 17rem;
+  font-weight: 500;
+  line-height: 21rem;
+}
+
+.hcc-hover-tooltip-description {
+  margin-top: 6rem;
+  color: #b9b5ac;
+  font-size: 14rem;
+  font-weight: 400;
+  line-height: 18rem;
+  white-space: pre-line;
+}
+
+.hcc-card-stats-host {
+  position: relative;
+}
+
+.hcc-card-stats {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  color: #e8e4dc;
+  font-size: 12rem;
+  font-weight: 600;
+  line-height: 14rem;
+  text-align: left;
+  text-shadow: none;
+  pointer-events: none;
+  position: absolute;
+  bottom: 4rem;
+  left: 6rem;
+  white-space: nowrap;
+  z-index: 1000;
+}
+
+.hcc-card-stats-line {
+  display: flex;
+  flex: 0 0 14rem;
+  align-items: center;
+  justify-content: flex-start;
+  height: 14rem;
+  line-height: 14rem;
+}
+
+.hcc-card-stat {
+  display: block;
+  margin-right: 9rem;
+  white-space: nowrap;
+}
+
+.hcc-card-stat:last-child {
+  margin-right: 0;
+}
+
+.hcc-card-stat--battles {
+  color: #e8e4dc;
+}
+
+.hcc-card-stat--damage {
+  color: #ffb36b;
+}
+
+.hcc-card-stat--win-rate-bad {
+  color: #ff6666;
+}
+
+.hcc-card-stat--win-rate-below-average {
+  color: #ff9f5a;
+}
+
+.hcc-card-stat--win-rate-average {
+  color: #ffd45c;
+}
+
+.hcc-card-stat--win-rate-good {
+  color: #91dc63;
+}
+
+.hcc-card-stat--win-rate-great {
+  color: #54d8cf;
+}
+
+.hcc-card-stat--win-rate-exceptional {
+  color: #c98cff;
+}
+
+.hcc-card-stat--mastery-1,
+.hcc-card-stat--marks-1 {
+  color: #d49a68;
+}
+
+.hcc-card-stat--mastery-2,
+.hcc-card-stat--marks-2 {
+  color: #d5dde8;
+}
+
+.hcc-card-stat--mastery-3,
+.hcc-card-stat--marks-3 {
+  color: #ffd766;
+}
+
+.hcc-card-stat--mastery-4 {
+  color: #c98cff;
+}
+
+.mediaMedium .hcc-native-filter {
+  flex-basis: 38rem;
+  width: 38rem;
+  height: 36rem;
+}
+
+.mediaMedium .hcc-native-icon-button {
+  flex-basis: 31rem;
+  width: 31rem;
+  height: 31rem;
+  font-size: 16rem;
+}
+
+.mediaMedium .hcc-card-stats {
+  bottom: 6rem;
+  left: 8rem;
+  font-size: 14rem;
+  line-height: 16rem;
+}
+
+.mediaMedium .hcc-card-stats-line {
+  flex-basis: 16rem;
+  height: 16rem;
+  line-height: 16rem;
+}
+
+.mediaMedium .hcc-card-stat {
+  margin-right: 11rem;
+}
+
+.hcc-carousel-rows-1 [class*="Page_carousel_"] {
+  flex-basis: 78rem;
+  flex-grow: 0;
+  flex-shrink: 0;
+  height: 78rem;
+  min-height: 78rem;
+}
+
+.hcc-carousel-rows-2 [class*="Page_carousel_"] {
+  flex-basis: 149rem;
+  flex-grow: 0;
+  flex-shrink: 0;
+  height: 149rem;
+  min-height: 149rem;
+}
+
+.hcc-native-carousel--3,
+.hcc-carousel-rows-3 [class*="Page_carousel_"] {
+  flex-basis: 220rem;
+  flex-grow: 0;
+  flex-shrink: 0;
+  height: 220rem;
+  min-height: 220rem;
+}
+
+.hcc-native-carousel--4,
+.hcc-carousel-rows-4 [class*="Page_carousel_"] {
+  flex-basis: 291rem;
+  flex-grow: 0;
+  flex-shrink: 0;
+  height: 291rem;
+  min-height: 291rem;
+}
+
+.mediaMedium .hcc-carousel-rows-1 [class*="Page_carousel_"] {
+  flex-basis: 85rem;
+  height: 85rem;
+  min-height: 85rem;
+}
+
+.mediaMedium .hcc-carousel-rows-2 [class*="Page_carousel_"] {
+  flex-basis: 163rem;
+  height: 163rem;
+  min-height: 163rem;
+}
+
+.mediaMedium .hcc-native-carousel--3,
+.mediaMedium.hcc-carousel-rows-3 [class*="Page_carousel_"],
+.mediaMedium .hcc-carousel-rows-3 [class*="Page_carousel_"] {
+  flex-basis: 241rem;
+  height: 241rem;
+  min-height: 241rem;
+}
+
+.mediaMedium .hcc-native-carousel--4,
+.mediaMedium.hcc-carousel-rows-4 [class*="Page_carousel_"],
+.mediaMedium .hcc-carousel-rows-4 [class*="Page_carousel_"] {
+  flex-basis: 319rem;
+  height: 319rem;
+  min-height: 319rem;
+}
+
+.mediaLarge .hcc-carousel-rows-1 [class*="Page_carousel_"] {
+  flex-basis: 97rem;
+  height: 97rem;
+  min-height: 97rem;
+}
+
+.mediaLarge .hcc-carousel-rows-2 [class*="Page_carousel_"] {
+  flex-basis: 185rem;
+  height: 185rem;
+  min-height: 185rem;
+}
+
+.mediaLarge .hcc-native-carousel--3,
+.mediaLarge.hcc-carousel-rows-3 [class*="Page_carousel_"],
+.mediaLarge .hcc-carousel-rows-3 [class*="Page_carousel_"] {
+  flex-basis: 274rem;
+  height: 274rem;
+  min-height: 274rem;
+}
+
+.mediaLarge .hcc-native-carousel--4,
+.mediaLarge.hcc-carousel-rows-4 [class*="Page_carousel_"],
+.mediaLarge .hcc-carousel-rows-4 [class*="Page_carousel_"] {
+  flex-basis: 363rem;
+  height: 363rem;
+  min-height: 363rem;
+}
+
+.mediaExtraLarge .hcc-native-carousel--3,
+.mediaExtraLarge.hcc-carousel-rows-3 [class*="Page_carousel_"],
+.mediaExtraLarge .hcc-carousel-rows-3 [class*="Page_carousel_"] {
+  flex-basis: 334rem;
+  height: 334rem;
+  min-height: 334rem;
+}
+
+.mediaExtraLarge .hcc-native-carousel--4,
+.mediaExtraLarge.hcc-carousel-rows-4 [class*="Page_carousel_"],
+.mediaExtraLarge .hcc-carousel-rows-4 [class*="Page_carousel_"] {
+  flex-basis: 443rem;
+  height: 443rem;
+  min-height: 443rem;
+}
+
