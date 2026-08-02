@@ -10,7 +10,7 @@ Core difference: this mod focuses on modern WoT 2.x compatibility and exposes si
 ## Current Status
 
 - Version: 1.0.0
-- Mod ID: com.nex0tic.github.hangar.carousel.classic
+- Mod ID: hangar.carousel.classic
 - Python runtime: WoT embedded Python 2.7
 - Security/quality: see [EXECUTIVE_SUMMARY.md](EXECUTIVE_SUMMARY.md) and [SECURITY_AUDIT_REPORT.md](SECURITY_AUDIT_REPORT.md)
 
@@ -20,7 +20,7 @@ Core difference: this mod focuses on modern WoT 2.x compatibility and exposes si
 - Adds configurable carousel row handling (1-4 rows and auto mode).
 - Adds card statistics overlays (battles, win rate, damage, mastery, marks on gun).
 - Integrates with native Gameface model properties and patched native bundles.
-- Provides XVM-compatible sorting schema with hierarchical criteria.
+- Provides a hierarchical sorting schema that is XVM-compatible by design, but does not require XVM.
 - Adds several practical filter toggles in the Hangar UI.
 
 ## Why It Is an Improved Version
@@ -197,7 +197,7 @@ Notes:
 
 - [res/scripts/client/gui/mods/mod_hangar_carousel_classic.py](res/scripts/client/gui/mods/mod_hangar_carousel_classic.py)
   Core Python 2.7 mod logic, integration hooks, sorting/filter/state handling.
-- [res/gui/gameface/mods/nex0tic/hangar_carousel_classic](res/gui/gameface/mods/nex0tic/hangar_carousel_classic)
+- [res/gui/gameface/mods/hcc/hangar_carousel_classic](res/gui/gameface/mods/hcc/hangar_carousel_classic)
   JS/CSS UI integration assets.
 - [config/default.json](config/default.json)
   Default user-facing configuration values.

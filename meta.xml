@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <root>
-    <id>com.nex0tic.github.hangar.carousel.classic</id>
+    <id>hangar.carousel.classic</id>
     <version>1.0.0</version>
     <name>Hangar Carousel Classic</name>
-    <description>Restores classic hangar carousel behavior and adds local vehicle card statistics for the World of Tanks 2.x client.</description>
+    <description>Restores the classic hangar carousel for World of Tanks 2.x with native Gameface integration, hierarchical sorting, and vehicle card statistics.</description>
 </root>

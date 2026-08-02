@@ -55,7 +55,7 @@ if (-not (Test-Path -LiteralPath $Python27)) {
 Remove-Item -LiteralPath $stage -Recurse -Force -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Force -Path `
     (Join-Path $stage 'res\scripts\client\gui\mods'), `
-    (Join-Path $stage 'res\gui\gameface\mods\nex0tic\hangar_carousel_classic'), `
+    (Join-Path $stage 'res\gui\gameface\mods\hcc\hangar_carousel_classic'), `
     (Join-Path $stage 'res\gui\gameface\_dist\production\mono\hangar\views\main\main.html'), `
     (Join-Path $stage 'res\gui\gameface\_dist\production\mono\hangar\views\vehicle_tooltip\vehicle_tooltip.html'), `
     (Join-Path $stage 'res\gui\gameface\_dist\production\mono\hangar\vehicle_tooltip'), `
@@ -74,14 +74,14 @@ $compiled = "$pythonSource`c"
 
 Copy-Item -LiteralPath (Join-Path $repo 'meta.xml') -Destination (Join-Path $stage 'meta.xml')
 Copy-Item -LiteralPath $compiled -Destination (Join-Path $stage 'res\scripts\client\gui\mods\mod_hangar_carousel_classic.pyc')
-Copy-Item -LiteralPath (Join-Path $repo 'res\gui\gameface\mods\nex0tic\hangar_carousel_classic\hangar_carousel_classic.js') `
-    -Destination (Join-Path $stage 'res\gui\gameface\mods\nex0tic\hangar_carousel_classic\hangar_carousel_classic.js')
-Copy-Item -LiteralPath (Join-Path $repo 'res\gui\gameface\mods\nex0tic\hangar_carousel_classic\hangar_carousel_classic.tooltip.js') `
-    -Destination (Join-Path $stage 'res\gui\gameface\mods\nex0tic\hangar_carousel_classic\hangar_carousel_classic.tooltip.js')
-Copy-Item -LiteralPath (Join-Path $repo 'res\gui\gameface\mods\nex0tic\hangar_carousel_classic\hangar_carousel_classic.css') `
-    -Destination (Join-Path $stage 'res\gui\gameface\mods\nex0tic\hangar_carousel_classic\hangar_carousel_classic.css')
-Copy-Item -LiteralPath (Join-Path $repo 'res\gui\gameface\mods\nex0tic\hangar_carousel_classic\hangar_carousel_classic.tooltip.css') `
-    -Destination (Join-Path $stage 'res\gui\gameface\mods\nex0tic\hangar_carousel_classic\hangar_carousel_classic.tooltip.css')
+Copy-Item -LiteralPath (Join-Path $repo 'res\gui\gameface\mods\hcc\hangar_carousel_classic\hangar_carousel_classic.js') `
+    -Destination (Join-Path $stage 'res\gui\gameface\mods\hcc\hangar_carousel_classic\hangar_carousel_classic.js')
+Copy-Item -LiteralPath (Join-Path $repo 'res\gui\gameface\mods\hcc\hangar_carousel_classic\hangar_carousel_classic.tooltip.js') `
+    -Destination (Join-Path $stage 'res\gui\gameface\mods\hcc\hangar_carousel_classic\hangar_carousel_classic.tooltip.js')
+Copy-Item -LiteralPath (Join-Path $repo 'res\gui\gameface\mods\hcc\hangar_carousel_classic\hangar_carousel_classic.css') `
+    -Destination (Join-Path $stage 'res\gui\gameface\mods\hcc\hangar_carousel_classic\hangar_carousel_classic.css')
+Copy-Item -LiteralPath (Join-Path $repo 'res\gui\gameface\mods\hcc\hangar_carousel_classic\hangar_carousel_classic.tooltip.css') `
+    -Destination (Join-Path $stage 'res\gui\gameface\mods\hcc\hangar_carousel_classic\hangar_carousel_classic.tooltip.css')
 & (Join-Path $PSScriptRoot 'patch-native-carousel.ps1') `
     -GameRoot $GameRoot `
     -OutputPath (Join-Path $stage 'res\gui\gameface\_dist\production\mono\hangar\views\main\main.html\bundle.js')
@@ -89,8 +89,8 @@ Copy-Item -LiteralPath (Join-Path $repo 'res\gui\gameface\mods\nex0tic\hangar_ca
     -GameRoot $GameRoot `
     -BundleOutputPath (Join-Path $stage 'res\gui\gameface\_dist\production\mono\hangar\views\vehicle_tooltip\vehicle_tooltip.html\bundle.js') `
     -CssOutputPath (Join-Path $stage 'res\gui\gameface\_dist\production\mono\hangar\vehicle_tooltip\vehicle_tooltip.css') `
-    -ScriptPath (Join-Path $repo 'res\gui\gameface\mods\nex0tic\hangar_carousel_classic\hangar_carousel_classic.tooltip.js') `
-    -StylePath (Join-Path $repo 'res\gui\gameface\mods\nex0tic\hangar_carousel_classic\hangar_carousel_classic.tooltip.css')
+    -ScriptPath (Join-Path $repo 'res\gui\gameface\mods\hcc\hangar_carousel_classic\hangar_carousel_classic.tooltip.js') `
+    -StylePath (Join-Path $repo 'res\gui\gameface\mods\hcc\hangar_carousel_classic\hangar_carousel_classic.tooltip.css')
 
 Remove-Item -LiteralPath $packagePath -Force -ErrorAction SilentlyContinue
 & $Python27 (Join-Path $PSScriptRoot 'package_wotmod.py') $stage $packagePath

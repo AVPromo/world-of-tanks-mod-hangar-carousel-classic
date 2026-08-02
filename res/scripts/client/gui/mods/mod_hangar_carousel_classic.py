@@ -1,7 +1,4 @@
-﻿# Python bytecode 2.7 (decompiled from Python 2.7)
-# Embedded file name: E:\Development\projects\apps\nex0tic\wot_mods\hangar_carousel_classic\src\python\mod_hangar_carousel_classic.py
-# Compiled at: 2026-07-17 18:35:01
-"""Hangar Carousel Classic bootstrap for the World of Tanks 2.x client.
+﻿"""Hangar Carousel Classic bootstrap for the World of Tanks 2.x client.
 
 The client embeds Python 2.7, so this module deliberately avoids Python 3-only
 syntax. Custom filter predicates narrow the native vehicle-statistics model;
@@ -38,17 +35,17 @@ except Exception:
     carousel_filter_module = None
 MOD_ID = 'hangar_carousel_classic'
 MOD_VERSION = '1.0.0'
-MOD_LINKAGE_ID = 'com.nex0tic.github.hangar.carousel.classic'
-PLAYLIST_ID_PREFIX = 'nex0tic_hcc_'
+MOD_LINKAGE_ID = 'hangar.carousel.classic'
+PLAYLIST_ID_PREFIX = 'hcc_'
 APPDATA_ROOT = os.environ.get('APPDATA', os.path.join(os.path.expanduser('~'), 'AppData', 'Roaming'))
 CONFIG_PATH = os.path.join(APPDATA_ROOT, 'Wargaming.net', 'WorldOfTanks', 'mods', 'mod_hangar_carousel_classic', 'config.json')
 RUNTIME_PATH = os.path.join(APPDATA_ROOT, 'Wargaming.net', 'WorldOfTanks', 'mods', 'mod_hangar_carousel_classic', 'runtime.json')
 LEGACY_CONFIG_PATH = os.path.join('res_mods', 'configs', MOD_ID, 'config.json')
 LEGACY_RUNTIME_PATH = os.path.join('res_mods', 'configs', MOD_ID, 'runtime.json')
-JS_URL = 'coui://gui/gameface/mods/nex0tic/hangar_carousel_classic/hangar_carousel_classic.js'
-CSS_URL = 'coui://gui/gameface/mods/nex0tic/hangar_carousel_classic/hangar_carousel_classic.css'
-TOOLTIP_JS_URL = 'coui://gui/gameface/mods/nex0tic/hangar_carousel_classic/hangar_carousel_classic.tooltip.js'
-TOOLTIP_CSS_URL = 'coui://gui/gameface/mods/nex0tic/hangar_carousel_classic/hangar_carousel_classic.tooltip.css'
+JS_URL = 'coui://gui/gameface/mods/hcc/hangar_carousel_classic/hangar_carousel_classic.js'
+CSS_URL = 'coui://gui/gameface/mods/hcc/hangar_carousel_classic/hangar_carousel_classic.css'
+TOOLTIP_JS_URL = 'coui://gui/gameface/mods/hcc/hangar_carousel_classic/hangar_carousel_classic.tooltip.js'
+TOOLTIP_CSS_URL = 'coui://gui/gameface/mods/hcc/hangar_carousel_classic/hangar_carousel_classic.tooltip.css'
 LOGGER = logging.getLogger('HangarCarouselClassic')
 DEFAULT_CONFIG = {'schemaVersion': 5,
  'enabled': True,

@@ -13,10 +13,10 @@ try {
     $required = @(
         'meta.xml',
         'res/scripts/client/gui/mods/mod_hangar_carousel_classic.pyc',
-        'res/gui/gameface/mods/nex0tic/hangar_carousel_classic/hangar_carousel_classic.js',
-        'res/gui/gameface/mods/nex0tic/hangar_carousel_classic/hangar_carousel_classic.css',
-        'res/gui/gameface/mods/nex0tic/hangar_carousel_classic/hangar_carousel_classic.tooltip.js',
-        'res/gui/gameface/mods/nex0tic/hangar_carousel_classic/hangar_carousel_classic.tooltip.css',
+        'res/gui/gameface/mods/hcc/hangar_carousel_classic/hangar_carousel_classic.js',
+        'res/gui/gameface/mods/hcc/hangar_carousel_classic/hangar_carousel_classic.css',
+        'res/gui/gameface/mods/hcc/hangar_carousel_classic/hangar_carousel_classic.tooltip.js',
+        'res/gui/gameface/mods/hcc/hangar_carousel_classic/hangar_carousel_classic.tooltip.css',
         'res/gui/gameface/_dist/production/mono/hangar/views/main/main.html/bundle.js',
         'res/gui/gameface/_dist/production/mono/hangar/views/vehicle_tooltip/vehicle_tooltip.html/bundle.js',
         'res/gui/gameface/_dist/production/mono/hangar/vehicle_tooltip/vehicle_tooltip.css'
@@ -42,7 +42,7 @@ try {
         throw "Unexpected Python bytecode magic: $magic (expected Python 2.7)."
     }
 
-    $js = $zip.GetEntry('res/gui/gameface/mods/nex0tic/hangar_carousel_classic/hangar_carousel_classic.js')
+    $js = $zip.GetEntry('res/gui/gameface/mods/hcc/hangar_carousel_classic/hangar_carousel_classic.js')
     $jsStream = $js.Open()
     $reader = New-Object IO.StreamReader($jsStream, [Text.Encoding]::UTF8)
     try {
@@ -132,7 +132,7 @@ try {
         throw 'Native vehicle tooltip stylesheet does not contain the Classic styles.'
     }
 
-    $css = $zip.GetEntry('res/gui/gameface/mods/nex0tic/hangar_carousel_classic/hangar_carousel_classic.css')
+    $css = $zip.GetEntry('res/gui/gameface/mods/hcc/hangar_carousel_classic/hangar_carousel_classic.css')
     $cssStream = $css.Open()
     $cssReader = New-Object IO.StreamReader($cssStream, [Text.Encoding]::UTF8)
     try {
