@@ -10,7 +10,7 @@ $repo = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $build = Join-Path $repo 'build'
 $stage = Join-Path $build 'stage'
 $dist = Join-Path $repo 'dist'
-$version = '1.0.0'
+$version = '1.0.1'
 $packageName = "mod_hangar_carousel_classic_$version.wotmod"
 $packagePath = Join-Path $dist $packageName
 

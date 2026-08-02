@@ -370,22 +370,6 @@
   margin-right: 11rem;
 }
 
-.hcc-carousel-rows-1 [class*="Page_carousel_"] {
-  flex-basis: 78rem;
-  flex-grow: 0;
-  flex-shrink: 0;
-  height: 78rem;
-  min-height: 78rem;
-}
-
-.hcc-carousel-rows-2 [class*="Page_carousel_"] {
-  flex-basis: 149rem;
-  flex-grow: 0;
-  flex-shrink: 0;
-  height: 149rem;
-  min-height: 149rem;
-}
-
 .hcc-native-carousel--3,
 .hcc-carousel-rows-3 [class*="Page_carousel_"] {
   flex-basis: 220rem;
@@ -404,18 +388,6 @@
   min-height: 291rem;
 }
 
-.mediaMedium .hcc-carousel-rows-1 [class*="Page_carousel_"] {
-  flex-basis: 85rem;
-  height: 85rem;
-  min-height: 85rem;
-}
-
-.mediaMedium .hcc-carousel-rows-2 [class*="Page_carousel_"] {
-  flex-basis: 163rem;
-  height: 163rem;
-  min-height: 163rem;
-}
-
 .mediaMedium .hcc-native-carousel--3,
 .mediaMedium.hcc-carousel-rows-3 [class*="Page_carousel_"],
 .mediaMedium .hcc-carousel-rows-3 [class*="Page_carousel_"] {
@@ -430,18 +402,6 @@
   flex-basis: 319rem;
   height: 319rem;
   min-height: 319rem;
-}
-
-.mediaLarge .hcc-carousel-rows-1 [class*="Page_carousel_"] {
-  flex-basis: 97rem;
-  height: 97rem;
-  min-height: 97rem;
-}
-
-.mediaLarge .hcc-carousel-rows-2 [class*="Page_carousel_"] {
-  flex-basis: 185rem;
-  height: 185rem;
-  min-height: 185rem;
 }
 
 .mediaLarge .hcc-native-carousel--3,

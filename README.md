@@ -9,7 +9,7 @@ The main difference is modern WoT 2.x compatibility plus much finer sorting cont
 
 ## Current Status
 
-- Version: 1.0.0
+- Version: 1.0.1
 - Mod ID: hangar.carousel.classic
 - Python runtime: WoT embedded Python 2.7
 - Security/quality: see [EXECUTIVE_SUMMARY.md](EXECUTIVE_SUMMARY.md) and [SECURITY_AUDIT_REPORT.md](SECURITY_AUDIT_REPORT.md)

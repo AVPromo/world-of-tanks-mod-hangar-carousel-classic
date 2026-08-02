@@ -114,15 +114,6 @@ function applyCarouselRowsClass() {
     root.classList.remove("hcc-carousel-rows-1", "hcc-carousel-rows-2", "hcc-carousel-rows-3", "hcc-carousel-rows-4");
     root.classList.add(`hcc-carousel-rows-${rows}`);
   }
-
-  const carouselRoots = document.querySelectorAll('[class*="Page_carousel_"]');
-  carouselRoots.forEach((element) => {
-    element.classList.remove("hcc-native-carousel--3", "hcc-native-carousel--4", "hcc-carousel-rows-1", "hcc-carousel-rows-2", "hcc-carousel-rows-3", "hcc-carousel-rows-4");
-    if (rows >= 3) {
-      element.classList.add(`hcc-native-carousel--${rows}`);
-    }
-    element.classList.add(`hcc-carousel-rows-${rows}`);
-  });
 }
 
 function applyActionCardsVisibility() {
