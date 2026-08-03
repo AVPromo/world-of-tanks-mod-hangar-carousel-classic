@@ -1,227 +1,67 @@
 # Hangar Carousel Classic (World of Tanks Mod)
 
-Classic-style hangar carousel mod for World of Tanks 2.x with native Gameface integration, custom card statistics, and advanced hierarchical sorting.
+Classic-style hangar carousel for World of Tanks 2.x with native Gameface integration, advanced sorting, and card stats overlays.
 
-This project extends the original Hangar Carousel Plus idea from RCooLeR:
-https://github.com/RCooLeR/WoT-Hangar-carousel-plus
-
-The main difference is a much finer sorting control: multi-level hierarchy, optional reverse order per criterion, and explicit nation/type priority layers.
-
-## Current Status
+## Quick Facts
 
 - Version: 1.0.2
 - Latest release: [v1.0.2](https://github.com/ticzz/world-of-tanks-mod-hangar-carousel-classic/releases/tag/v1.0.2)
-- Full changelog: [GitHub Releases](https://github.com/ticzz/world-of-tanks-mod-hangar-carousel-classic/releases)
+- Full release notes: [GitHub Releases](https://github.com/ticzz/world-of-tanks-mod-hangar-carousel-classic/releases)
 - Mod ID: hangar.carousel.classic
-- Python runtime: WoT embedded Python 2.7
-- Latest compatible Game/Client version: 2.3.1.0
-- Security/quality: see [EXECUTIVE_SUMMARY.md](EXECUTIVE_SUMMARY.md) and [SECURITY_AUDIT_REPORT.md](SECURITY_AUDIT_REPORT.md)
+- Runtime: WoT embedded Python 2.7
+- Tested game version: 2.3.1.0
 
-## Release Highlights (v1.0.2)
+## Key Features
 
-- Gameface namespace and mod identity were unified to `hcc` / `hangar.carousel.classic`.
-- Frontend row handling was rolled back to old behavior (no 1/2-row CSS path, no extra JS 3/4-row branch).
-- Build and validation scripts were updated to the new namespace and package layout.
+- Carousel rows: manual 1-4 and auto mode.
+- Vehicle card stats: battles, win rate, average damage, alpha damage, mastery, marks on gun.
+- Filters: bonus, favorite, elite, premium, non-elite, not ready, marks incomplete, crew not maxed.
+- Advanced hierarchical sorting with optional reverse per criterion.
+- Nation/type priority layers for deterministic grouping.
 
-## What This Mod Does
+## Install
 
-- Restores and extends classic hangar carousel behavior.
-- Adds configurable carousel row handling (1-4 rows and auto mode).
-- Adds card statistics overlays (battles, win rate, damage, mastery, marks on gun).
-- Integrates with native Gameface model properties and patched native bundles.
-- Provides a hierarchical sorting schema that is XVM-compatible by design, but does not require XVM.
-- Adds several practical filter toggles in the Hangar UI.
+1. Download the latest package from [Releases](https://github.com/ticzz/world-of-tanks-mod-hangar-carousel-classic/releases).
+2. Place the `.wotmod` into your client mods folder, for example:
+   `G:/Games/World_of_Tanks_EU/mods/2.3.1.0/`
+3. Start the game and configure via ModsSettingsAPI.
 
-## Why It Is an Improved Version
+## Build Locally
 
-Compared to the original carousel-plus approach, this project adds:
+```powershell
+./tools/build.ps1
+./tools/validate.ps1 -PackagePath ./dist/mod_hangar_carousel_classic_1.0.2.wotmod
+./tools/install.ps1 -GameRoot G:/Games/World_of_Tanks_EU -PackagePath ./dist/mod_hangar_carousel_classic_1.0.2.wotmod
+```
 
-- Hierarchical sorting criteria list instead of single-mode only sorting.
-- Per-criterion reverse mode using a minus prefix.
-- Nation priority ordering and vehicle type priority ordering.
-- Runtime and configuration migration logic (legacy format to schemaVersion 5).
-- Expanded compatibility/safety patches for modern WoT client behavior.
-- Build-time validation gates for Python bytecode, native bundle hooks, and required assets.
+## Documentation
 
-## Feature Overview
+- Detailed feature/config/build docs: [docs/DETAILS.md](docs/DETAILS.md)
+- Security summary: [EXECUTIVE_SUMMARY.md](EXECUTIVE_SUMMARY.md)
+- Security audit: [SECURITY_AUDIT_REPORT.md](SECURITY_AUDIT_REPORT.md)
 
-### 1) Carousel Rows
+## Quick Links
 
-- Manual rows: 1, 2, 3, 4
-- Auto mode: the mod tracks and preserves client-resolved row count behavior where applicable.
-
-### 2) Card Statistics
-
-Configurable card fields:
-
-- battles
-- winRate
-- averageDamage
-- mastery
-- marksOnGun
-
-Minimum battles threshold is configurable.
-
-### 3) Filters
-
-Supported filter IDs:
-
-- bonus
-- favorite
-- elite
-- premium
-- non_elite
-- not_ready
-- marks_incomplete
-- crew_not_maxed
-
-### 4) Advanced Hierarchical Sorting (Main Upgrade)
-
-Sorting is configured via an ordered list of criteria. The order in the list is the hierarchy:
-
-- First entry = primary key
-- Second entry = secondary key
-- Third entry = tertiary key
-- and so on
-
-Each criterion can be ascending or descending:
-
-- ascending: criterion name, e.g. battles
-- descending: prefix with -, e.g. -battles
-
-Supported criteria:
-
-- nation
-- type
-- level / -level
-- maxBattleTier / -maxBattleTier
-- premium / -premium
-- battles / -battles
-- winRate / -winRate
-- markOfMastery / -markOfMastery
-- damageRating / -damageRating
-- marksOnGun / -marksOnGun
-- battlePassPoints / -battlePassPoints
-- lastPlayed / -lastPlayed
-
-### 5) Nation and Type Priority Layers
-
-You can define custom priority order independent from numeric sorting:
-
-- nations_order: ordered nation tokens, for example ussr, germany, usa, china, france, uk, japan, czech, poland, sweden, italy
-- types_order: ordered type tokens, for example lightTank, mediumTank, heavyTank, AT-SPG, SPG
-
-Unknown/unmapped entries are sorted last.
-
-## Practical Sorting Examples
-
-Use these examples inside sorting.sorting_criteria:
-
-1. nation, type, level
-- Classic hierarchy by nation -> type -> tier ascending
-
-2. nation, type, -level
-- Nation/type groups with highest tier first inside each type group
-
-3. -winRate, -battles, level
-- Performance-first ranking, tie-break by battles, then tier
-
-4. premium, nation, type, -damageRating
-- Premium-first layout, then grouped by nation/type, then strongest damage first
-
-5. -lastPlayed
-- Recently played tanks first
-
-6. nation, type, -markOfMastery, -marksOnGun
-- Group by nation/type, then skill/progression ordering within group
-
-## Configuration
-
-Default configuration is in [config/default.json](config/default.json).
-
-Runtime/user config path used by the mod:
-
-- %APPDATA%/Wargaming.net/WorldOfTanks/mods/mod_hangar_carousel_classic/config.json
-
-Runtime state path:
-
-- %APPDATA%/Wargaming.net/WorldOfTanks/mods/mod_hangar_carousel_classic/runtime.json
-
-Legacy fallback paths are read when present, then migrated.
+- Releases overview: [GitHub Releases](https://github.com/ticzz/world-of-tanks-mod-hangar-carousel-classic/releases)
+- Latest package (v1.0.2): [mod_hangar_carousel_classic_1.0.2.wotmod](https://github.com/ticzz/world-of-tanks-mod-hangar-carousel-classic/releases/download/v1.0.2/mod_hangar_carousel_classic_1.0.2.wotmod)
+- Full technical docs: [docs/DETAILS.md](docs/DETAILS.md)
+- Main mod source: [res/scripts/client/gui/mods/mod_hangar_carousel_classic.py](res/scripts/client/gui/mods/mod_hangar_carousel_classic.py)
+- Frontend assets: [res/gui/gameface/mods/hcc/hangar_carousel_classic](res/gui/gameface/mods/hcc/hangar_carousel_classic)
+- Build script: [tools/build.ps1](tools/build.ps1)
+- Validate script: [tools/validate.ps1](tools/validate.ps1)
+- Install script: [tools/install.ps1](tools/install.ps1)
+- Default config: [config/default.json](config/default.json)
+- Package metadata: [meta.xml](meta.xml)
 
 ## Changelog Policy
 
 - README contains only short release highlights.
 - Full per-release details are published on [GitHub Releases](https://github.com/ticzz/world-of-tanks-mod-hangar-carousel-classic/releases).
 
-## Build and Validation
-
-Project scripts:
-
-- [tools/build.ps1](tools/build.ps1)
-- [tools/install.ps1](tools/install.ps1)
-- [tools/validate.ps1](tools/validate.ps1)
-- [tools/package_wotmod.py](tools/package_wotmod.py)
-
-Recommended workflow if you want to build and verify the mod yourself:
-
-1. Open PowerShell and switch to the repository folder.
-2. Run the build script. It compiles the Python 2.7 mod, stages the Gameface assets, patches the native bundles, and creates the final `.wotmod` file in `dist/`.
-
-```powershell
-./tools/build.ps1
-```
-
-3. Validate the package. This checks that the archive contains the required assets, that the bytecode is Python 2.7 compatible, and that the native bundle markers are present.
-
-```powershell
-./tools/validate.ps1 -PackagePath ./dist/mod_hangar_carousel_classic_1.0.2.wotmod
-```
-
-4. Install the package into your World of Tanks client. Replace `G:/Games/World_of_Tanks_EU` with your own game folder if needed.
-
-```powershell
-./tools/install.ps1 -GameRoot G:/Games/World_of_Tanks_EU -PackagePath ./dist/mod_hangar_carousel_classic_1.0.2.wotmod
-```
-
-Notes:
-
-- If you do not trust [the prebuilt ".wotmod" you can downlod right here](https://github.com/ticzz/world-of-tanks-mod-hangar-carousel-classic/releases/download/v1.0.2/mod_hangar_carousel_classic_1.0.2.wotmod), run the build locally and install the package from `dist/`.
-- Build enforces Python 2.7 bytecode compatibility.
-- Packaging keeps entries uncompressed as required for .wotmod compatibility.
-- Validation checks required assets and native patch markers.
-
-## Installation Notes
-
-- Requires World of Tanks client with Gameface support.
-- If net.openwg.gameface is missing, injection is skipped and features fail closed.
-- Existing installed versions are backed up by installer scripts before replacement.
-
-## Repository Structure
-
-- [res/scripts/client/gui/mods/mod_hangar_carousel_classic.py](res/scripts/client/gui/mods/mod_hangar_carousel_classic.py)
-  Core Python 2.7 mod logic, integration hooks, sorting/filter/state handling.
-- [res/gui/gameface/mods/hcc/hangar_carousel_classic](res/gui/gameface/mods/hcc/hangar_carousel_classic)
-  JS/CSS UI integration assets.
-- [config/default.json](config/default.json)
-  Default user-facing configuration values.
-- [meta.xml](meta.xml)
-  Package metadata.
-- [tools](tools)
-  Build/install/validate toolchain.
-
-## Compatibility and Safety
-
-- Defensive error handling around game services access.
-- Hot-reload cleanup for callbacks/providers/models.
-- Dossier fetch rate limiting to reduce UI-blocking risk in large garages.
-- Legacy config migration path to current schema.
-
 ## Credits
 
-- Original concept and inspiration: [RCooLeR / WoT-Hangar-carousel-plus](https://github.com/RCooLeR/WoT-Hangar-carousel-plus)
-- This repository: a modernized hangar carousel workflow for WoT 2.x with native Gameface integration and extended sorting control
+- Original concept: [RCooLeR / WoT-Hangar-carousel-plus](https://github.com/RCooLeR/WoT-Hangar-carousel-plus)
 
 ## Disclaimer
 
-This is a third-party mod for World of Tanks. Use at your own responsibility and always keep backups of your configuration and installed mods.
+This is a third-party mod for World of Tanks. Use at your own responsibility and keep backups of your config and installed mods.
