@@ -33,15 +33,15 @@ try:
     from gui.filters import carousel_filter as carousel_filter_module
 except Exception:
     carousel_filter_module = None
-MOD_ID = 'hangar_carousel_classic'
+MOD_ID = 'mod_hangar_carousel_classic'
 MOD_VERSION = '1.0.1'
-MOD_LINKAGE_ID = 'hangar.carousel.classic'
-PLAYLIST_ID_PREFIX = 'hcc_'
+MOD_LINKAGE_ID = 'mod_hangar.carousel.classic'
+PLAYLIST_ID_PREFIX = 'mhcc_'
 APPDATA_ROOT = os.environ.get('APPDATA', os.path.join(os.path.expanduser('~'), 'AppData', 'Roaming'))
 CONFIG_PATH = os.path.join(APPDATA_ROOT, 'Wargaming.net', 'WorldOfTanks', 'mods', 'mod_hangar_carousel_classic', 'config.json')
 RUNTIME_PATH = os.path.join(APPDATA_ROOT, 'Wargaming.net', 'WorldOfTanks', 'mods', 'mod_hangar_carousel_classic', 'runtime.json')
-LEGACY_CONFIG_PATH = os.path.join('res_mods', 'configs', MOD_ID, 'config.json')
-LEGACY_RUNTIME_PATH = os.path.join('res_mods', 'configs', MOD_ID, 'runtime.json')
+LEGACY_CONFIG_PATH = os.path.join('res_mods', 'configs', 'hangar_carousel_classic', 'config.json')
+LEGACY_RUNTIME_PATH = os.path.join('res_mods', 'configs', 'hangar_carousel_classic', 'runtime.json')
 JS_URL = 'coui://gui/gameface/mods/hcc/hangar_carousel_classic/hangar_carousel_classic.js'
 CSS_URL = 'coui://gui/gameface/mods/hcc/hangar_carousel_classic/hangar_carousel_classic.css'
 TOOLTIP_JS_URL = 'coui://gui/gameface/mods/hcc/hangar_carousel_classic/hangar_carousel_classic.tooltip.js'
@@ -61,6 +61,7 @@ DEFAULT_CONFIG = {'schemaVersion': 5,
                'fields': ['battles',
                           'winRate',
                           'averageDamage',
+                          'alphaDamage',
                           'mastery',
                           'marksOnGun'],
                'minimumBattles': 1},
@@ -624,6 +625,51 @@ def _marks_on_gun(vehicle_dossier):
         return 0
 
 
+def _alpha_damage(vehicle):
+    """Return nominal alpha damage for the first available shell, fallback 0."""
+    try:
+        descriptor = getattr(vehicle, 'descriptor', None)
+        if descriptor is None:
+            descriptor = getattr(vehicle, 'typeDescriptor', None)
+        if descriptor is None:
+            return 0
+        gun = getattr(descriptor, 'gun', None)
+        if gun is None:
+            return 0
+
+        shots = getattr(gun, 'shots', None)
+        if shots is None and hasattr(gun, 'get'):
+            shots = gun.get('shots')
+        if not shots:
+            return 0
+
+        for shot in shots:
+            shell = getattr(shot, 'shell', None)
+            if shell is None and isinstance(shot, dict):
+                shell = shot.get('shell')
+            if shell is None:
+                continue
+
+            damage = getattr(shell, 'damage', None)
+            if damage is None and isinstance(shell, dict):
+                damage = shell.get('damage')
+            if not damage:
+                continue
+
+            if isinstance(damage, (list, tuple)):
+                try:
+                    return int(round(float(damage[0])))
+                except Exception:
+                    continue
+            try:
+                return int(round(float(damage)))
+            except Exception:
+                continue
+    except Exception:
+        LOGGER.debug('Unable to extract alpha damage for vehicle %s', getattr(vehicle, 'intCD', 'unknown'))
+    return 0
+
+
 def _build_stats(vehicle, account_random_stats, vehicle_cuts):
     global DOSSIER_FETCH_COUNTER
     battles = 0
@@ -631,11 +677,12 @@ def _build_stats(vehicle, account_random_stats, vehicle_cuts):
     mastery = 0
     if vehicle.intCD <= 0:
         LOGGER.debug('Invalid intCD for vehicle: %s', vehicle.intCD)
-        return {'battles': 0, 'winRate': 0, 'averageDamage': 0, 'mastery': 0, 'marksOnGun': 0}
+        return {'battles': 0, 'winRate': 0, 'averageDamage': 0, 'alphaDamage': 0, 'mastery': 0, 'marksOnGun': 0}
     if vehicle.intCD in vehicle_cuts:
         battles, wins, _ = vehicle_cuts[vehicle.intCD]
         mastery = account_random_stats.getMarkOfMasteryForVehicle(vehicle.intCD) if account_random_stats is not None else 0
     average_damage = 0
+    alpha_damage = _alpha_damage(vehicle)
     marks_on_gun = 0
     try:
         # Use cache to avoid redundant dossier lookups
@@ -674,8 +721,27 @@ def _build_stats(vehicle, account_random_stats, vehicle_cuts):
     return {'battles': int(battles),
      'winRate': round(100.0 * wins / battles, 1) if battles else 0.0,
      'averageDamage': average_damage,
+     'alphaDamage': alpha_damage,
      'mastery': int(mastery),
      'marksOnGun': marks_on_gun}
+
+
+def _normalized_card_stats_config(raw_stats_config):
+    """Ensure card fields include alphaDamage while preserving configured order."""
+    stats_config = dict(raw_stats_config or {})
+    fields = stats_config.get('fields', [])
+    if not isinstance(fields, list):
+        fields = []
+    normalized_fields = []
+    seen = set()
+    for field in fields:
+        if isinstance(field, basestring) and field and field not in seen:
+            normalized_fields.append(field)
+            seen.add(field)
+    if 'alphaDamage' not in seen:
+        normalized_fields.append('alphaDamage')
+    stats_config['fields'] = normalized_fields
+    return stats_config
 
 
 def _normalize_nation_token(value):
@@ -1097,7 +1163,7 @@ def _build_payload():
             vehicle_cuts = {}
     else:
         vehicle_cuts = {}
-    stats_config = CONFIG.get('cardStats', {})
+    stats_config = _normalized_card_stats_config(CONFIG.get('cardStats', {}))
     stats_enabled = bool(stats_config.get('enabled', True))
     stats = {}
     if stats_enabled:

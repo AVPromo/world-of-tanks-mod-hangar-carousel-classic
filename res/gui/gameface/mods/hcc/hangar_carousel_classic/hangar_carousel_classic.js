@@ -10,10 +10,12 @@ const LABELS = {
     sort_marksOnGun: "Marks of Excellence",
     sort_lastPlayed: "Last played (HCC)",
     sorting: "HCC sorting",
-    stat_battles: "B",
-    stat_win_rate: "WR",
-    stat_damage: "D",
-    stat_marks: "MoE",
+    stat_battles: "⚔️",
+    stat_win_rate: "💯",
+    stat_damage: "🎯",
+    stat_alpha_damage: "🔥",
+    stat_mastery: "🥇",
+    stat_marks: "〽️",
     carousel_rows: "Carousel rows",
     carousel_rows_description: "Number of vehicle rows displayed in the hangar carousel.",
     carousel_auto: "Automatic rows",
@@ -137,7 +139,7 @@ function formatCompact(value) {
 }
 
 function masteryLabel(value) {
-  return value > 0 ? `M${value}` : "";
+  return value > 0 ? `${labels().stat_mastery} ${value}` : "";
 }
 
 function winRateBand(value) {
@@ -165,6 +167,9 @@ function statRows(stats) {
   }
   if (fields.includes("averageDamage")) {
     rows.push([{ classes: ["damage"], text: `${labels().stat_damage} ${formatCompact(stats.averageDamage)}` }]);
+  }
+  if (fields.includes("alphaDamage")) {
+    rows.push([{ classes: ["alpha-damage"], text: `${labels().stat_alpha_damage} ${formatCompact(stats.alphaDamage)}` }]);
   }
   const achievements = [];
   if (fields.includes("mastery") && stats.mastery) {

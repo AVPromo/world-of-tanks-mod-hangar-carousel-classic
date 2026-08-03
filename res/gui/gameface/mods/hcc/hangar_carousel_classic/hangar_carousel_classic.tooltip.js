@@ -6,6 +6,7 @@ const HCC_TOOLTIP_LABELS = {
     tooltip_battles: "Battles",
     tooltip_win_rate: "Win rate",
     tooltip_average_damage: "Average damage",
+    tooltip_alpha_damage: "Alpha damage",
     tooltip_mastery: "Mastery badge",
     tooltip_marks: "Marks of Excellence"
   }
@@ -75,6 +76,13 @@ function HCCTooltipItems() {
       label: labels.tooltip_average_damage,
       value: HCCTooltipFormat(stats.averageDamage),
       classes: ["damage"]
+    });
+  }
+  if (fields.includes("alphaDamage")) {
+    items.push({
+      label: labels.tooltip_alpha_damage,
+      value: HCCTooltipFormat(stats.alphaDamage),
+      classes: ["alpha-damage"]
     });
   }
   if (fields.includes("mastery") && Number(stats.mastery) > 0) {
