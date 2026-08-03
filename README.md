@@ -36,7 +36,7 @@ Classic-style hangar carousel for World of Tanks 2.x with native Gameface integr
 
 ## Documentation
 
-- Detailed feature/config/build docs: [docs/DETAILS.md](docs/DETAILS.md)
+- Detailed feature/config/build docs: [docs/TECHNICAL_DETAILS.md](docs/TECHNICAL_DETAILS.md)
 - Security summary: [EXECUTIVE_SUMMARY.md](EXECUTIVE_SUMMARY.md)
 - Security audit: [SECURITY_AUDIT_REPORT.md](SECURITY_AUDIT_REPORT.md)
 
@@ -44,7 +44,7 @@ Classic-style hangar carousel for World of Tanks 2.x with native Gameface integr
 
 - Releases overview: [GitHub Releases](https://github.com/ticzz/world-of-tanks-mod-hangar-carousel-classic/releases)
 - Latest package (v1.0.2): [mod_hangar_carousel_classic_1.0.2.wotmod](https://github.com/ticzz/world-of-tanks-mod-hangar-carousel-classic/releases/download/v1.0.2/mod_hangar_carousel_classic_1.0.2.wotmod)
-- Full technical docs: [docs/DETAILS.md](docs/DETAILS.md)
+- Full technical docs: [docs/TECHNICAL_DETAILS.md](docs/TECHNICAL_DETAILS.md)
 - Main mod source: [res/scripts/client/gui/mods/mod_hangar_carousel_classic.py](res/scripts/client/gui/mods/mod_hangar_carousel_classic.py)
 - Frontend assets: [res/gui/gameface/mods/hcc/hangar_carousel_classic](res/gui/gameface/mods/hcc/hangar_carousel_classic)
 - Build script: [tools/build.ps1](tools/build.ps1)
