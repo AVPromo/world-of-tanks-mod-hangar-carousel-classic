@@ -20,8 +20,13 @@ $bundlePackagePath = Join-Path $GameRoot 'res\packages\gui-part4.pkg'
 $cssPackagePath = Join-Path $GameRoot 'res\packages\gui-part2.pkg'
 $bundleEntryPath = 'gui/gameface/_dist/production/mono/hangar/views/vehicle_tooltip/vehicle_tooltip.html/bundle.js'
 $cssEntryPath = 'gui/gameface/_dist/production/mono/hangar/vehicle_tooltip/vehicle_tooltip.css'
-$expectedBundleHash = 'B1CBC96E18174947F5CC83E46A5511924DA9D7AEF139DFA8CB75AA79B366DA4E'
-$expectedCssHash = '4D9D45F739F642F5CCD443386722045F319EC873352B159B36BAEA210249D822'
+$supportedBundleHashes = @(
+    'B1CBC96E18174947F5CC83E46A5511924DA9D7AEF139DFA8CB75AA79B366DA4E', # WoT 2.3.1.0
+    '66AACCC3D55B62EFC6264359F133D51F04270A8E7E737FE1BB2FFB6461ECC1E4'  # WoT 2.3.1.1
+)
+$supportedCssHashes = @(
+    '4D9D45F739F642F5CCD443386722045F319EC873352B159B36BAEA210249D822'  # WoT 2.3.1.0
+)
 
 Add-Type -AssemblyName System.IO.Compression
 Add-Type -AssemblyName System.IO.Compression.FileSystem
@@ -63,11 +68,11 @@ $bundleBytes = Read-ZipEntryBytes $bundlePackagePath $bundleEntryPath
 $cssBytes = Read-ZipEntryBytes $cssPackagePath $cssEntryPath
 $bundleHash = Get-BytesHash $bundleBytes
 $cssHash = Get-BytesHash $cssBytes
-if ($bundleHash -ne $expectedBundleHash) {
-    throw "Unsupported native tooltip bundle $bundleHash; expected $expectedBundleHash"
+if ($bundleHash -notin $supportedBundleHashes) {
+    throw "Unsupported native tooltip bundle $bundleHash; supported hashes: $($supportedBundleHashes -join ', ')"
 }
-if ($cssHash -ne $expectedCssHash) {
-    throw "Unsupported native tooltip stylesheet $cssHash; expected $expectedCssHash"
+if ($cssHash -notin $supportedCssHashes) {
+    throw "Unsupported native tooltip stylesheet $cssHash; supported hashes: $($supportedCssHashes -join ', ')"
 }
 
 $utf8 = New-Object Text.UTF8Encoding($false)

@@ -22,6 +22,7 @@ from gui.impl.lobby.hangar.presenters.vehicle_filters_presenter import VehicleFi
 from gui.impl.lobby.hangar.presenters.vehicle_statistics_presenter import VehiclesStatisticsPresenter
 from gui.impl.lobby.hangar.presenters.vehicle_playlists_presenter import VehiclePlaylistsPresenter
 from gui.impl.lobby.tooltips.carousel_vehicle_tooltip import CarouselVehicleTooltipView
+from gui.shared.items_parameters import params_helper as items_params_helper
 from gui.shared.utils.requesters import REQ_CRITERIA
 from gui.veh_post_progression.models.progression import PostProgressionCompletion
 from helpers import dependency
@@ -34,7 +35,7 @@ try:
 except Exception:
     carousel_filter_module = None
 MOD_ID = 'mod_hangar_carousel_classic'
-MOD_VERSION = '1.0.2'
+MOD_VERSION = '1.0.3'
 MOD_LINKAGE_ID = 'mod_hangar.carousel.classic'
 PLAYLIST_ID_PREFIX = 'mhcc_'
 APPDATA_ROOT = os.environ.get('APPDATA', os.path.join(os.path.expanduser('~'), 'AppData', 'Roaming'))
@@ -321,7 +322,7 @@ SETTINGS_REGISTERED = False
 DOSSIER_CACHE = {}
 DOSSIER_CACHE_GENERATION = 0
 DOSSIER_FETCH_COUNTER = 0
-MAX_DOSSIER_FETCHES_PER_REFRESH = 3
+MAX_DOSSIER_FETCHES_PER_REFRESH = 256
 
 def _register_callback(delay, callback):
     try:
@@ -467,7 +468,9 @@ def _load_config():
             loaded = json.load(config_file)
         if not isinstance(loaded, dict):
             raise ValueError('root value must be an object')
-        return _deep_merge(DEFAULT_CONFIG, _migrate_config(loaded))
+        merged = _deep_merge(DEFAULT_CONFIG, _migrate_config(loaded))
+        merged['cardStats'] = _normalized_card_stats_config(merged.get('cardStats', {}))
+        return merged
     except IOError:
         LOGGER.info('No user config at %s; using defaults', CONFIG_PATH)
     except Exception:
@@ -616,7 +619,6 @@ def _inventory_vehicles():
         LOGGER.warning('Failed to get inventory vehicles: %s', e)
         return {}
 
-
 def _marks_on_gun(vehicle_dossier):
     try:
         achievement = vehicle_dossier.getTotalStats().getAchievement(MARK_ON_GUN_RECORD)
@@ -625,8 +627,79 @@ def _marks_on_gun(vehicle_dossier):
         return 0
 
 
+def _marks_on_gun_rating(vehicle_dossier):
+    try:
+        random_stats = vehicle_dossier.getRandomStats()
+        if random_stats is None:
+            return 0.0
+        achievement = random_stats.getAchievement(MARK_ON_GUN_RECORD)
+        if achievement is None:
+            return 0.0
+        return round(float(achievement.getDamageRating() or 0.0), 2)
+    except Exception:
+        return 0.0
+
+
+def _marks_on_gun_level(vehicle_dossier):
+    try:
+        achievement = vehicle_dossier.getRandomStats().getAchievement(MARK_ON_GUN_RECORD)
+        if achievement is None:
+            return 0
+        return int(achievement.getValue() or 0)
+    except Exception:
+        return 0
+
+
 def _alpha_damage(vehicle):
-    """Return nominal alpha damage for the first available shell, fallback 0."""
+    """Return nominal alpha damage using the same vehicle params source as the hangar panel."""
+    def _from_params(vehicle_like):
+        if vehicle_like is None:
+            return None
+        try:
+            params = items_params_helper.getParameters(vehicle_like)
+            if isinstance(params, dict):
+                value = params.get('avgDamage')
+                if value is not None:
+                    return int(round(float(value)))
+        except Exception:
+            pass
+        try:
+            comparator = items_params_helper.similarCrewComparator(vehicle_like)
+            if comparator is not None:
+                param = comparator.getExtendedData('avgDamage')
+                value = getattr(param, 'value', None) if param is not None else None
+                if value is not None:
+                    return int(round(float(value)))
+        except Exception:
+            pass
+        return None
+
+    for candidate in (vehicle,
+     SERVICES.itemsCache.items.getItemByCD(vehicle.intCD) if SERVICES.itemsCache else None,
+     SERVICES.itemsCache.items.getStockVehicle(vehicle.intCD) if SERVICES.itemsCache else None):
+        try:
+            result = _from_params(candidate)
+            if result is not None and result > 0:
+                return result
+        except Exception:
+            pass
+
+    try:
+        value = _from_params(vehicle)
+        if value is not None:
+            return value
+    except Exception:
+        LOGGER.debug('Unable to extract alpha damage from params_helper for vehicle %s', getattr(vehicle, 'intCD', 'unknown'))
+
+    try:
+        cached_vehicle = SERVICES.itemsCache.items.getItemByCD(vehicle.intCD)
+        if cached_vehicle is not None:
+            value = _from_params(cached_vehicle)
+            if value is not None:
+                return value
+    except Exception:
+        LOGGER.debug('Unable to extract alpha damage from cached vehicle for %s', getattr(vehicle, 'intCD', 'unknown'))
+
     try:
         descriptor = getattr(vehicle, 'descriptor', None)
         if descriptor is None:
@@ -677,13 +750,20 @@ def _build_stats(vehicle, account_random_stats, vehicle_cuts):
     mastery = 0
     if vehicle.intCD <= 0:
         LOGGER.debug('Invalid intCD for vehicle: %s', vehicle.intCD)
-        return {'battles': 0, 'winRate': 0, 'averageDamage': 0, 'alphaDamage': 0, 'mastery': 0, 'marksOnGun': 0}
+        return {'battles': 0,
+         'winRate': 0,
+         'averageDamage': 0,
+         'alphaDamage': 0,
+         'mastery': 0,
+         'marksOnGun': 0.0,
+         'marksOnGunLevel': 0}
     if vehicle.intCD in vehicle_cuts:
         battles, wins, _ = vehicle_cuts[vehicle.intCD]
         mastery = account_random_stats.getMarkOfMasteryForVehicle(vehicle.intCD) if account_random_stats is not None else 0
     average_damage = 0
     alpha_damage = _alpha_damage(vehicle)
-    marks_on_gun = 0
+    marks_on_gun = 0.0
+    marks_on_gun_level = 0
     try:
         # Use cache to avoid redundant dossier lookups
         cache_key = (vehicle.intCD, DOSSIER_CACHE_GENERATION)
@@ -711,10 +791,9 @@ def _build_stats(vehicle, account_random_stats, vehicle_cuts):
         except Exception:
             LOGGER.debug('RandomStats extraction failed for vehicle %d', vehicle.intCD)
             raise
-        random_battles = random_stats.getBattlesCount()
-        if random_battles:
-            average_damage = int(round(random_stats.getDamageDealt() / float(random_battles)))
-        marks_on_gun = _marks_on_gun(vehicle_dossier)
+        average_damage = int(random_stats.getAvgDamage() or 0)
+        marks_on_gun = _marks_on_gun_rating(vehicle_dossier)
+        marks_on_gun_level = _marks_on_gun_level(vehicle_dossier)
     except Exception:
         LOGGER.debug('Dossier stats unavailable for vehicle %d; using defaults', vehicle.intCD)
 
@@ -723,7 +802,8 @@ def _build_stats(vehicle, account_random_stats, vehicle_cuts):
      'averageDamage': average_damage,
      'alphaDamage': alpha_damage,
      'mastery': int(mastery),
-     'marksOnGun': marks_on_gun}
+     'marksOnGun': marks_on_gun,
+     'marksOnGunLevel': int(marks_on_gun_level)}
 
 
 def _normalized_card_stats_config(raw_stats_config):
@@ -860,7 +940,7 @@ def _get_sort_value(vehicle, criterion, account_random_stats, vehicle_cuts):
             value = int(stats.get('averageDamage', 0))
         elif key == 'marksOnGun':
             stats = _build_stats(vehicle, account_random_stats, vehicle_cuts)
-            value = int(stats.get('marksOnGun', 0))
+            value = int(round(float(stats.get('marksOnGun', 0.0)) * 100))
         elif key == 'battlePassPoints':
             # Fetch Battle Pass points from controller if available
             try:
@@ -1653,22 +1733,22 @@ def _on_settings_changed(linkage, settings):
             sorting['enabled'] = bool(settings.get('sortingEnabled', True))
         
         # Parse sorting criteria from comma-separated input
-        criteria_input = settings.get('sortingCriteria', ', '.join(_default_sorting_criteria()))
-        sorting_criteria = [c.strip() for c in criteria_input.split(',') if c.strip()]
-        if sorting_criteria:
-            _set_sorting_criteria(sorting_criteria)
+        criteria_input = settings.get('sortingCriteria', None)
+        if criteria_input is None:
+            sorting_criteria = _get_configured_sorting_criteria()
+        else:
+            sorting_criteria = [c.strip() for c in criteria_input.split(',') if c.strip()]
+        _set_sorting_criteria(sorting_criteria)
         
         # Parse nations order from comma-separated input
         nations_input = settings.get('nationsOrder', '')
         nations_order = [n.strip() for n in nations_input.split(',') if n.strip()]
-        if nations_input:  # Only update if user provided input
-            _set_nations_order(nations_order)
+        _set_nations_order(nations_order)
         
         # Parse vehicle types order from comma-separated input
         types_input = settings.get('typesOrder', '')
         types_order = [t.strip() for t in types_input.split(',') if t.strip()]
-        if types_input:  # Only update if user provided input
-            _set_types_order(types_order)
+        _set_types_order(types_order)
         
         # Apply filter settings from checkboxes
         tank_filters = CONFIG.setdefault('tankfilters', {})

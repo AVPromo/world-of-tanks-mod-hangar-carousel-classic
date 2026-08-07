@@ -13,7 +13,7 @@
   },
   "cardStats": {
     "enabled": true,
-    "fields": ["battles", "winRate", "averageDamage", "mastery", "marksOnGun"],
+    "fields": ["battles", "winRate", "averageDamage", "alphaDamage", "mastery", "marksOnGun"],
     "minimumBattles": 1
   },
   "sorting": {

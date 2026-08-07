@@ -55,6 +55,16 @@ function HCCTooltipWinRateBand(value) {
   return "exceptional";
 }
 
+function HCCTooltipMarksLevel(stats) {
+  const explicitLevel = Number(stats.marksOnGunLevel || 0);
+  if (explicitLevel > 0) return explicitLevel;
+  const rating = Number(stats.marksOnGun || 0);
+  if (rating >= 95) return 3;
+  if (rating >= 85) return 2;
+  if (rating >= 65) return 1;
+  return 0;
+}
+
 function HCCTooltipItems() {
   const stats = HCCTooltipState.stats || {};
   const fields = HCCTooltipState.statsConfig?.fields || [];
@@ -68,7 +78,7 @@ function HCCTooltipItems() {
     items.push({
       label: labels.tooltip_win_rate,
       value: `${winRate.toFixed(1)}%`,
-      classes: ["win-rate", `win-rate-${HCCTooltipWinRateBand(winRate)}`]
+      classes: ["win-rate"]
     });
   }
   if (fields.includes("averageDamage")) {
@@ -86,17 +96,21 @@ function HCCTooltipItems() {
     });
   }
   if (fields.includes("mastery") && Number(stats.mastery) > 0) {
+    const mastery = Number(stats.mastery);
     items.push({
       label: labels.tooltip_mastery,
-      value: `M${Number(stats.mastery)}`,
-      classes: ["mastery", `mastery-${Number(stats.mastery)}`]
+      value: mastery >= 4 ? "ASS" : `M${mastery}`,
+      classes: ["mastery", `mastery-${mastery}`]
     });
   }
   if (fields.includes("marksOnGun") && Number(stats.marksOnGun) > 0) {
+    const level = HCCTooltipMarksLevel(stats);
+    const classes = ["marks"];
+    if (level > 0) classes.push(`marks-${level}`);
     items.push({
       label: labels.tooltip_marks,
-      value: String(Number(stats.marksOnGun)),
-      classes: ["marks", `marks-${Number(stats.marksOnGun)}`]
+      value: `${Number(stats.marksOnGun).toFixed(2)}%`,
+      classes
     });
   }
   return items;

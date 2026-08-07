@@ -10,12 +10,12 @@ const LABELS = {
     sort_marksOnGun: "Marks of Excellence",
     sort_lastPlayed: "Last played (HCC)",
     sorting: "HCC sorting",
-    stat_battles: "⚔️",
-    stat_win_rate: "💯",
-    stat_damage: "🎯",
-    stat_alpha_damage: "🔥",
-    stat_mastery: "🥇",
-    stat_marks: "〽️",
+    stat_battles: "Batt",
+    stat_win_rate: "WR",
+    stat_damage: "Avg",
+    stat_alpha_damage: "Alpha",
+    stat_mastery: "M",
+    stat_marks: "MoE",
     carousel_rows: "Carousel rows",
     carousel_rows_description: "Number of vehicle rows displayed in the hangar carousel.",
     carousel_auto: "Automatic rows",
@@ -28,17 +28,17 @@ const LABELS = {
 };
 
 const SORT_ICONS = {
-  default: '<svg class="hcc-native-sort-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4v16M5 7l3-3 3 3M16 20V4M13 17l3 3 3-3"/></svg>',
-  battles: '<svg class="hcc-native-sort-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20h18M4 20v-6h4v6M10 20V9h4v11M16 20V4h4v16"/></svg>',
-  winRate: '<svg class="hcc-native-sort-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="m4 18 5-5 4 3 7-9M15 7h5v5"/></svg>',
-  averageDamage: '<svg class="hcc-native-sort-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="m13 2-8 12h6l-1 8 9-13h-6z"/></svg>',
-  marksOnGun: '<svg class="hcc-native-sort-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></svg>',
-  lastPlayed: '<svg class="hcc-native-sort-svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v6l4 2"/></svg>'
+  default: "<>",
+  battles: "##",
+  winRate: "WR",
+  averageDamage: "DMG",
+  marksOnGun: "MOE",
+  lastPlayed: "LP"
 };
 
 const SORT_DIRECTION_ICONS = {
-  descending: '<svg class="hcc-native-sort-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M7 15l5 5 5-5"/></svg>',
-  ascending: '<svg class="hcc-native-sort-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20V4M7 9l5-5 5 5"/></svg>'
+  descending: "v",
+  ascending: "^"
 };
 
 let state = { stats: {}, statsConfig: {}, sorting: {}, actionCards: {}, carousel: { rows: 2 }, enabled: false };
@@ -47,21 +47,14 @@ let lastStatsDiagnostic = "";
 let scheduled = false;
 let tooltipElement = null;
 
-function setSvgContent(element, svgString) {
-  // Safe SVG insertion via DOMParser to prevent innerHTML injection
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(`<root>${svgString}</root>`, "text/xml");
-  if (doc.documentElement.tagName === "parsererror") {
-    console.error("Invalid SVG:", svgString);
-    return;
-  }
+function setButtonGlyph(element, glyph, className) {
   while (element.firstChild) {
     element.removeChild(element.firstChild);
   }
-  for (let i = 0; i < doc.documentElement.childNodes.length; i++) {
-    const node = doc.documentElement.childNodes[i];
-    element.appendChild(document.importNode(node, true));
-  }
+  const span = document.createElement("span");
+  span.className = className;
+  span.textContent = String(glyph || "");
+  element.appendChild(span);
 }
 
 function unwrap(value) {
@@ -139,7 +132,19 @@ function formatCompact(value) {
 }
 
 function masteryLabel(value) {
-  return value > 0 ? `${labels().stat_mastery} ${value}` : "";
+  const mastery = Number(value || 0);
+  if (mastery >= 4) return "ASS";
+  return `${labels().stat_mastery}${mastery}`;
+}
+
+function marksLevel(stats) {
+  const explicitLevel = Number(stats.marksOnGunLevel || 0);
+  if (explicitLevel > 0) return explicitLevel;
+  const rating = Number(stats.marksOnGun || 0);
+  if (rating >= 95) return 3;
+  if (rating >= 85) return 2;
+  if (rating >= 65) return 1;
+  return 0;
 }
 
 function winRateBand(value) {
@@ -155,31 +160,40 @@ function winRateBand(value) {
 function statRows(stats) {
   const fields = state.statsConfig?.fields || [];
   const rows = [];
+  const compact = [];
   if (fields.includes("battles")) {
-    rows.push([{ classes: ["battles"], text: `${labels().stat_battles} ${formatCompact(stats.battles)}` }]);
+    compact.push({ classes: ["battles"], text: `${labels().stat_battles} ${formatCompact(stats.battles)}` });
   }
   if (fields.includes("winRate")) {
     const winRate = Number(stats.winRate || 0);
-    rows.push([{
-      classes: ["win-rate", `win-rate-${winRateBand(winRate)}`],
+    compact.push({
+      classes: ["win-rate"],
       text: `${labels().stat_win_rate} ${winRate.toFixed(1)}%`
-    }]);
+    });
   }
   if (fields.includes("averageDamage")) {
-    rows.push([{ classes: ["damage"], text: `${labels().stat_damage} ${formatCompact(stats.averageDamage)}` }]);
+    compact.push({ classes: ["damage"], text: `${labels().stat_damage} ${formatCompact(stats.averageDamage)}` });
   }
   if (fields.includes("alphaDamage")) {
-    rows.push([{ classes: ["alpha-damage"], text: `${labels().stat_alpha_damage} ${formatCompact(stats.alphaDamage)}` }]);
+    compact.push({ classes: ["alpha-damage"], text: `${labels().stat_alpha_damage} ${formatCompact(stats.alphaDamage)}` });
+  }
+  for (let index = 0; index < compact.length; index += 2) {
+    rows.push(compact.slice(index, index + 2));
   }
   const achievements = [];
-  if (fields.includes("mastery") && stats.mastery) {
-    achievements.push({ classes: ["mastery", `mastery-${Number(stats.mastery)}`], text: masteryLabel(stats.mastery) });
+  if (fields.includes("mastery")) {
+    const mastery = Number(stats.mastery || 0);
+    achievements.push({ classes: ["mastery", `mastery-${mastery}`], text: masteryLabel(mastery) });
   }
-  if (fields.includes("marksOnGun") && stats.marksOnGun) {
-    achievements.push({ classes: ["marks", `marks-${Number(stats.marksOnGun)}`], text: `${stats.marksOnGun} ${labels().stat_marks}` });
+  if (fields.includes("marksOnGun")) {
+    const marks = Number(stats.marksOnGun || 0);
+    const level = marksLevel(stats);
+    const classes = ["marks"];
+    if (level > 0) classes.push(`marks-${level}`);
+    achievements.push({ classes, text: `${labels().stat_marks} ${marks.toFixed(2)}%` });
   }
   if (achievements.length) rows.push(achievements);
-  return rows.slice(0, 4);
+  return rows;
 }
 
 function directChildByClass(parent, className) {
@@ -291,9 +305,9 @@ function carouselRowButtonContent(rows) {
   const visibleRows = automatic ? 4 : Number(rows);
   const bars = [];
   for (let index = 0; index < visibleRows; index += 1) {
-    bars.push(`<rect x="2" y="${2 + index * 4}" width="12" height="2" rx="0.5" style="fill:#fff!important"/>`);
+    bars.push('<span class="hcc-native-row-bar"></span>');
   }
-  return `<svg viewBox="0 0 16 18" aria-hidden="true" style="color:#fff!important;fill:#fff!important">${bars.join("")}</svg>` +
+  return `<span class="hcc-native-row-bars" aria-hidden="true">${bars.join("")}</span>` +
     `<span class="hcc-native-row-button-label" style="color:#fff!important">${automatic ? "A" : rows}</span>`;
 }
 
@@ -342,7 +356,7 @@ function renderNativeFilterPanel() {
       button.type = "button";
       button.className = "hcc-native-sort-button";
       if (mode === state.sorting.mode) button.classList.add("hcc-native-sort-button--active");
-      setSvgContent(button, SORT_ICONS[mode] || SORT_ICONS.default);
+      setButtonGlyph(button, SORT_ICONS[mode] || SORT_ICONS.default, "hcc-native-sort-glyph");
       const title = labels()[`sort_${mode}`] || mode;
       button.setAttribute("aria-label", title);
       button.title = title;
@@ -359,9 +373,11 @@ function renderNativeFilterPanel() {
     const direction = document.createElement("button");
     direction.type = "button";
     direction.className = "hcc-native-sort-button hcc-native-sort-direction";
-    setSvgContent(direction, state.sorting.descending
-      ? SORT_DIRECTION_ICONS.descending
-      : SORT_DIRECTION_ICONS.ascending);
+    setButtonGlyph(
+      direction,
+      state.sorting.descending ? SORT_DIRECTION_ICONS.descending : SORT_DIRECTION_ICONS.ascending,
+      "hcc-native-sort-direction-glyph"
+    );
     direction.title = state.sorting.descending ? labels().descending : labels().ascending;
     bindTooltip(direction, direction.title, labels()[`sort_${state.sorting.mode}`] || state.sorting.mode);
     direction.addEventListener("click", (event) => {

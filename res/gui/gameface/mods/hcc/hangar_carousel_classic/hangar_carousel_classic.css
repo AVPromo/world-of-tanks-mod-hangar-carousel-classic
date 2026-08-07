@@ -108,6 +108,25 @@
   text-shadow: none;
 }
 
+.hcc-native-row-bars {
+  display: flex;
+  flex: 0 0 16rem;
+  width: 16rem;
+  height: 18rem;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.hcc-native-row-bar {
+  display: block;
+  width: 12rem;
+  height: 2rem;
+  border-radius: 1rem;
+  background: #fff;
+}
+
 .hcc-native-row-button svg {
   flex: 0 0 16rem;
   width: 16rem;
@@ -143,6 +162,25 @@
 .hcc-native-sort-button .hcc-native-sort-svg * {
   fill: none !important;
   stroke: #fff !important;
+}
+
+.hcc-native-sort-glyph,
+.hcc-native-sort-direction-glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 14rem;
+  color: #fff !important;
+  font-size: 10rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.2rem;
+}
+
+.hcc-native-sort-direction-glyph {
+  min-width: 10rem;
+  font-size: 14rem;
+  letter-spacing: 0;
 }
 
 .hcc-native-filter svg {
@@ -258,10 +296,10 @@
   align-items: flex-start;
   color: #e8e4dc;
   font-size: 12rem;
-  font-weight: 600;
+  font-weight: 700;
   line-height: 14rem;
   text-align: left;
-  text-shadow: none;
+  text-shadow: 0 0.7rem 1.4rem rgba(0, 0, 0, 1), 0 0 1rem rgba(0, 0, 0, 0.8);
   pointer-events: none;
   position: absolute;
   bottom: 4rem;
@@ -283,6 +321,10 @@
   display: block;
   margin-right: 9rem;
   white-space: nowrap;
+  font-weight: 700;
+  text-shadow: 0 0.85rem 1.6rem rgba(0, 0, 0, 1), 0 0 1.2rem rgba(0, 0, 0, 0.95), 0 0 0.7rem rgba(0, 0, 0, 0.85);
+  -webkit-text-stroke: 0.28rem rgba(0, 0, 0, 0.8);
+  paint-order: stroke fill;
 }
 
 .hcc-card-stat:last-child {

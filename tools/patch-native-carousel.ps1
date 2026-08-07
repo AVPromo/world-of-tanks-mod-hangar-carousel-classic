@@ -11,7 +11,10 @@ $GameRoot = [IO.Path]::GetFullPath($GameRoot)
 $OutputPath = [IO.Path]::GetFullPath($OutputPath)
 $packagePath = Join-Path $GameRoot 'res\packages\gui-part3.pkg'
 $entryPath = 'gui/gameface/_dist/production/mono/hangar/views/main/main.html/bundle.js'
-$expectedHash = '753102BFFDFE1A52B23706606F804CAC236463CB1A827A0EA3449E1D263FC6CE'
+$supportedHashes = @(
+    '753102BFFDFE1A52B23706606F804CAC236463CB1A827A0EA3449E1D263FC6CE', # WoT 2.3.1.0
+    '21B48CFFF0EDA9247413338CBEF3EDC2DD7BE0D1B6504F67AF05E163A22DF1A6'  # WoT 2.3.1.1
+)
 
 Add-Type -AssemblyName System.IO.Compression
 Add-Type -AssemblyName System.IO.Compression.FileSystem
@@ -43,8 +46,8 @@ try {
 finally {
     $sha.Dispose()
 }
-if ($sourceHash -ne $expectedHash) {
-    throw "Unsupported native hangar bundle $sourceHash; expected WoT 2.3.1 bundle $expectedHash"
+if ($sourceHash -notin $supportedHashes) {
+    throw "Unsupported native hangar bundle $sourceHash; supported hashes: $($supportedHashes -join ', ')"
 }
 
 $source = [Text.Encoding]::UTF8.GetString($sourceBytes)
