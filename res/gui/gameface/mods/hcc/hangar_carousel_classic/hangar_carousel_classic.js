@@ -3,6 +3,16 @@ const CARD_PREFIX = "vehicleCard-";
 
 const LABELS = {
   en: {
+    filters: "HCC filters",
+    filter_all: "All vehicles",
+    filter_bonus: "Bonus crew XP",
+    filter_favorite: "Favorite tanks",
+    filter_elite: "Elite tanks",
+    filter_premium: "Premium tanks",
+    filter_non_elite: "Non-elite tanks",
+    filter_not_ready: "Broken / crew incomplete",
+    filter_marks_incomplete: "Marks incomplete (Tier V+)",
+    filter_crew_not_maxed: "Crew level below 75%",
     sort_default: "Default order",
     sort_battles: "Battles",
     sort_winRate: "Win rate",
@@ -41,8 +51,9 @@ const SORT_DIRECTION_ICONS = {
   ascending: "^"
 };
 
-let state = { stats: {}, statsConfig: {}, sorting: {}, actionCards: {}, carousel: { rows: 2 }, enabled: false };
+let state = { stats: {}, statsConfig: {}, sorting: {}, actionCards: {}, carousel: { rows: 2 }, filters: [], activeFilters: [], enabled: false };
 let lastStateJson = "";
+let lastActiveFiltersJson = "";
 let lastStatsDiagnostic = "";
 let scheduled = false;
 let tooltipElement = null;
@@ -326,7 +337,7 @@ function renderNativeFilterPanel() {
     nativeContent.appendChild(section);
   }
 
-  const signature = JSON.stringify([state.enabled, state.sorting, state.actionCards, state.carousel]);
+  const signature = JSON.stringify([state.enabled, state.filters, state.activeFilters, state.sorting, state.actionCards, state.carousel]);
   if (section.dataset.signature === signature) return;  // Early exit if no state change
   section.dataset.signature = signature;
   hideTooltip();
@@ -345,6 +356,35 @@ function renderNativeFilterPanel() {
   bindTooltip(refresh, labels().refresh, "");
   newSection.appendChild(refresh);
   refresh.addEventListener("click", () => callCommand("onRefresh"));
+
+  if (Array.isArray(state.filters) && state.filters.length) {
+    addHeading(newSection, labels().filters);
+    const filters = document.createElement("div");
+    filters.className = "hcc-native-filters";
+    newSection.appendChild(filters);
+    const activeFilters = new Set(state.activeFilters || []);
+    for (const filter of state.filters) {
+      const filterId = String(filter.id || "");
+      if (!filterId) continue;
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "hcc-native-filter";
+      const active = filterId === "all" ? activeFilters.size === 0 : activeFilters.has(filterId);
+      if (active) button.classList.add("hcc-native-filter--active");
+      const title = labels()[`filter_${filterId}`] || filterId;
+      button.textContent = filterId === "all" ? "ALL" : String(filter.count || 0);
+      button.setAttribute("aria-label", title);
+      button.setAttribute("aria-pressed", String(active));
+      button.title = title;
+      bindTooltip(button, title, `${filter.count || 0}`);
+      button.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        callCommand("onToggleFilter", { filterId });
+      });
+      filters.appendChild(button);
+    }
+  }
 
   if (state.sorting?.enabled && Array.isArray(state.sorting.options)) {
     addHeading(newSection, labels().sorting);
@@ -428,20 +468,32 @@ function syncModel() {
   const model = findModel();
   if (!model) return;
   const stateJson = String(unwrap(model.stateJson) || "{}");
-  if (stateJson === lastStateJson) return;
+  const activeFiltersJson = String(unwrap(model.activeFiltersJson) || "[]");
+  const stateChanged = stateJson !== lastStateJson;
+  const activeFiltersChanged = activeFiltersJson !== lastActiveFiltersJson;
+  if (!stateChanged && !activeFiltersChanged) return;
   lastStateJson = stateJson;
-  try {
-    const parsedState = JSON.parse(stateJson);
-    // Validate payload structure for compatibility
-    if (typeof parsedState !== "object" || !("version" in parsedState)) {
-      console.warn("[HangarCarouselClassic] Invalid payload structure; expected versioned object");
-      state = { stats: {}, statsConfig: {}, sorting: {}, actionCards: {}, carousel: { rows: 2 }, enabled: false };
+  lastActiveFiltersJson = activeFiltersJson;
+  if (stateChanged) {
+    try {
+      const parsedState = JSON.parse(stateJson);
+      // Validate payload structure for compatibility
+      if (typeof parsedState !== "object" || !("version" in parsedState)) {
+        console.warn("[HangarCarouselClassic] Invalid payload structure; expected versioned object");
+        state = { stats: {}, statsConfig: {}, sorting: {}, actionCards: {}, carousel: { rows: 2 }, filters: [], activeFilters: [], enabled: false };
+        return;
+      }
+      state = parsedState;
+    } catch (error) {
+      console.error("[HangarCarouselClassic] Invalid state JSON", error);
+      state = { stats: {}, statsConfig: {}, sorting: {}, actionCards: {}, carousel: { rows: 2 }, filters: [], activeFilters: [], enabled: false };
       return;
     }
-    state = parsedState;
+  }
+  try {
+    state.activeFilters = JSON.parse(activeFiltersJson);
   } catch (error) {
-    console.error("[HangarCarouselClassic] Invalid state JSON", error);
-    state = { stats: {}, statsConfig: {}, sorting: {}, actionCards: {}, carousel: { rows: 2 }, enabled: false };
+    state.activeFilters = [];
   }
   scheduleRender();
 }

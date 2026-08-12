@@ -35,7 +35,7 @@ try:
 except Exception:
     carousel_filter_module = None
 MOD_ID = 'mod_hangar_carousel_classic'
-MOD_VERSION = '1.0.4'
+MOD_VERSION = '1.0.5'
 MOD_LINKAGE_ID = 'mod_hangar.carousel.classic'
 PLAYLIST_ID_PREFIX = 'mhcc_'
 APPDATA_ROOT = os.environ.get('APPDATA', os.path.join(os.path.expanduser('~'), 'AppData', 'Roaming'))
@@ -1258,6 +1258,7 @@ def _set_filter_state(filter_id):
     RUNTIME_STATE['activeFilters'] = sorted(ACTIVE_FILTERS)
     _save_runtime()
     _sync_sort_property()
+    _refresh_native_vehicle_model()
     
     # Snapshot for logging (avoid race condition if ACTIVE_FILTERS modified during refresh)
     active_snapshot = set(ACTIVE_FILTERS)
@@ -1615,10 +1616,14 @@ def _patch_vehicle_statistics_presenter():
             original_finalize(self)
 
     def patched_update_vehicles(self, vehicles):
+        filtered_vehicles = vehicles
+        if ACTIVE_FILTERS and vehicles is not None:
+            filtered_vehicles = dict(((int_cd, vehicle) for int_cd, vehicle in vehicles.items()
+             if all((_matches(filter_id, vehicle) for filter_id in ACTIVE_FILTERS))))
         if original_update_vehicles:
-            original_update_vehicles(self, vehicles)
+            original_update_vehicles(self, filtered_vehicles)
         try:
-            _apply_auto_rows(len(vehicles) if vehicles is not None else None)
+            _apply_auto_rows(len(filtered_vehicles) if filtered_vehicles is not None else None)
         except Exception:
             LOGGER.exception('Unable to apply automatic rows from statistics presenter')
         _refresh_all_models('statistics presenter update')
@@ -1652,7 +1657,6 @@ def _settings_tooltip(title, body):
 
 
 SETTINGS_TEXT = {'en': {'display': u'Carousel and cards',
-    'filters': u'Vehicle Filters',
     'sorting': u'Sorting (XVM-compatible)',
     'native': u'Already provided by the client: Premium, Elite, rented/temporary, daily bonus and Battle Pass points available.',
     'enabled': u'Enable Hangar Carousel Classic',
@@ -1660,14 +1664,6 @@ SETTINGS_TEXT = {'en': {'display': u'Carousel and cards',
     'minBattles': u'Minimum battles for card statistics',
     'rows': u'Carousel rows',
     'auto': u'Automatic',
-    'bonus': u'Bonus crew XP',
-    'favorite': u'Favorite tanks',
-    'elite': u'Elite tanks',
-    'premium': u'Premium tanks',
-    'non_elite': u'Non-elite tanks',
-    'not_ready': u'Broken / crew incomplete',
-    'marks_incomplete': u'Marks incomplete (Tier V+)',
-    'crew_not_maxed': u'Crew level < 75%',
     'sortingCriteria': u'Sort criteria',
     'sortingCriteriaTooltip': u'Comma-separated hierarchy. Supported values: nation, type, level, maxBattleTier, premium, battles, winRate, markOfMastery, damageRating, marksOnGun, battlePassPoints, lastPlayed. Prefix a value with - to reverse its order (example: -battles).',
     'nationsOrder': u'Nation order',
@@ -1700,9 +1696,6 @@ def _register_settings():
         nations_str = ', '.join(nations_order) if nations_order else ''
         types_str = ', '.join(types_order) if types_order else ''
         
-        # Get current filter settings
-        tank_filters = CONFIG.get('tankfilters', {})
-        
         # Build UI columns
         column1 = [templates.createLabel(text['display']),
          templates.createCheckbox(text['cardStats'], 'cardStatsEnabled', bool(CONFIG.get('cardStats', {}).get('enabled', True))),
@@ -1710,18 +1703,8 @@ def _register_settings():
          templates.createDropdown(text['rows'], 'carouselRows', [text['auto'],
           u'1',
           u'2',
-          u'3',
-          u'4'], rows_value),
-         templates.createEmpty(12),
-         templates.createLabel(text['filters']),
-         templates.createCheckbox(text['bonus'], 'filterBonus', bool(tank_filters.get('bonus', {}).get('enabled', True))),
-         templates.createCheckbox(text['favorite'], 'filterFavorite', bool(tank_filters.get('favorite', {}).get('enabled', True))),
-         templates.createCheckbox(text['elite'], 'filterElite', bool(tank_filters.get('elite', {}).get('enabled', True))),
-         templates.createCheckbox(text['premium'], 'filterPremium', bool(tank_filters.get('premium', {}).get('enabled', True))),
-         templates.createCheckbox(text['non_elite'], 'filterNonElite', bool(tank_filters.get('non_elite', {}).get('enabled', False))),
-         templates.createCheckbox(text['not_ready'], 'filterNotReady', bool(tank_filters.get('not_ready', {}).get('enabled', False))),
-         templates.createCheckbox(text['marks_incomplete'], 'filterMarksIncomplete', bool(tank_filters.get('marks_incomplete', {}).get('enabled', False))),
-         templates.createCheckbox(text['crew_not_maxed'], 'filterCrewNotMaxed', bool(tank_filters.get('crew_not_maxed', {}).get('enabled', False)))]
+         u'3',
+         u'4'], rows_value)]
         
         column2 = [templates.createLabel(text['sorting']),
          templates.createCheckbox(text['sorting'], 'sortingEnabled', sorting_enabled),
@@ -1807,17 +1790,6 @@ def _on_settings_changed(linkage, settings):
         types_input = settings.get('typesOrder', '')
         types_order = [t.strip() for t in types_input.split(',') if t.strip()]
         _set_types_order(types_order)
-        
-        # Apply filter settings from checkboxes
-        tank_filters = CONFIG.setdefault('tankfilters', {})
-        tank_filters.setdefault('bonus', {})['enabled'] = bool(settings.get('filterBonus', True))
-        tank_filters.setdefault('favorite', {})['enabled'] = bool(settings.get('filterFavorite', True))
-        tank_filters.setdefault('elite', {})['enabled'] = bool(settings.get('filterElite', True))
-        tank_filters.setdefault('premium', {})['enabled'] = bool(settings.get('filterPremium', True))
-        tank_filters.setdefault('non_elite', {})['enabled'] = bool(settings.get('filterNonElite', False))
-        tank_filters.setdefault('not_ready', {})['enabled'] = bool(settings.get('filterNotReady', False))
-        tank_filters.setdefault('marks_incomplete', {})['enabled'] = bool(settings.get('filterMarksIncomplete', False))
-        tank_filters.setdefault('crew_not_maxed', {})['enabled'] = bool(settings.get('filterCrewNotMaxed', False))
         
         # Apply action card visibility settings
         actions = CONFIG.setdefault('actionCards', {})
