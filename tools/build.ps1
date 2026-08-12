@@ -99,6 +99,7 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 & (Join-Path $PSScriptRoot 'validate.ps1') -PackagePath $packagePath
+& (Join-Path $PSScriptRoot 'build-full.ps1') -PackagePath $packagePath -Version $version
 if ($Install) {
     & (Join-Path $PSScriptRoot 'install.ps1') -GameRoot $GameRoot -PackagePath $packagePath
 }
