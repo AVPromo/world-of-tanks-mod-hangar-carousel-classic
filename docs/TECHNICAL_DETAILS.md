@@ -132,14 +132,16 @@ Recommended workflow:
 
 ```powershell
 ./tools/build.ps1
-./tools/validate.ps1 -PackagePath ./dist/mod_hangar_carousel_classic_1.0.3.wotmod
-./tools/install.ps1 -GameRoot G:/Games/World_of_Tanks_EU -PackagePath ./dist/mod_hangar_carousel_classic_1.0.3.wotmod
+./tools/validate.ps1 -PackagePath ./dist/mod_hangar_carousel_classic_1.0.4.wotmod
+./tools/install.ps1 -GameRoot G:/Games/World_of_Tanks_EU -PackagePath ./dist/mod_hangar_carousel_classic_1.0.4.wotmod
 ```
 
 ## Installation Notes
 
 - Requires a World of Tanks client with Gameface support.
-- If net.openwg.gameface is missing, injection is skipped and features fail closed.
+- Requires the matching `net.openwg.gameface_*.wotmod` from the [OpenWG Gameface releases](https://gitlab.com/openwg/wot.gameface/-/releases) in the client mods folder.
+- If `net.openwg.gameface` is missing, injection is skipped and features fail closed.
+- ModsSettingsAPI is optional; without it, edit the JSON configuration file directly.
 - Existing installed versions are backed up by installer scripts before replacement.
 
 ## Repository Structure

@@ -35,7 +35,7 @@ try:
 except Exception:
     carousel_filter_module = None
 MOD_ID = 'mod_hangar_carousel_classic'
-MOD_VERSION = '1.0.3'
+MOD_VERSION = '1.0.4'
 MOD_LINKAGE_ID = 'mod_hangar.carousel.classic'
 PLAYLIST_ID_PREFIX = 'mhcc_'
 APPDATA_ROOT = os.environ.get('APPDATA', os.path.join(os.path.expanduser('~'), 'AppData', 'Roaming'))
@@ -536,6 +536,53 @@ def _carousel_auto():
     return RUNTIME_STATE.get('carouselRowsMode', 'manual') == 'auto'
 
 
+def _auto_rows_for_vehicle_count(vehicle_count):
+    try:
+        count = max(0, int(vehicle_count))
+    except (TypeError, ValueError):
+        return 2
+    if count <= 8:
+        return 1
+    if count <= 16:
+        return 2
+    if count <= 24:
+        return 3
+    return 4
+
+
+def _effective_carousel_rows(vehicle_count=None):
+    if _carousel_auto():
+        if vehicle_count is None:
+            vehicles = _inventory_vehicles()
+            vehicle_count = len(vehicles.values()) if vehicles else 0
+        return _auto_rows_for_vehicle_count(vehicle_count)
+    return _carousel_rows() or 2
+
+
+def _apply_auto_rows(vehicle_count=None):
+    if not _carousel_auto():
+        return
+    if vehicle_count is None:
+        vehicles = _inventory_vehicles()
+        vehicle_count = len(vehicles.values()) if vehicles else 0
+    rows = _auto_rows_for_vehicle_count(vehicle_count)
+    if int(RUNTIME_STATE.get('carouselRows', 0) or 0) == rows:
+        return
+    RUNTIME_STATE['carouselRows'] = rows
+    _save_runtime()
+    for provider in list(FILTER_PROVIDERS):
+        try:
+            provider._VehicleFiltersDataProvider__rowCount = rows
+            provider._VehicleFiltersDataProvider__updateCarousel()
+        except Exception:
+            LOGGER.exception('Unable to apply automatic carousel rows after filter update (%d)', rows)
+    for model in list(MODELS):
+        try:
+            model.refresh()
+        except Exception:
+            LOGGER.exception('Unable to refresh model after automatic row update')
+
+
 def _sync_carousel_auto_property(enabled):
     for provider in list(FILTER_PROVIDERS):
         try:
@@ -584,6 +631,13 @@ def _set_carousel_rows(rows, automatic=False):
         RUNTIME_STATE['carouselRowsMode'] = 'auto'
         _save_runtime()
         _sync_carousel_auto_property(True)
+        effective_rows = _effective_carousel_rows()
+        for provider in list(FILTER_PROVIDERS):
+            try:
+                provider._VehicleFiltersDataProvider__rowCount = effective_rows
+                provider._VehicleFiltersDataProvider__updateCarousel()
+            except Exception:
+                LOGGER.exception('Unable to apply automatic carousel rows (%d)', effective_rows)
         for model in list(MODELS):
             model.refresh()
 
@@ -1279,7 +1333,7 @@ def _build_payload():
                         'rented',
                         'daily_bonus',
                         'battle_pass_available'],
-     'carousel': {'rows': _carousel_rows() or 2,
+    'carousel': {'rows': _effective_carousel_rows(len(values)),
                   'mode': 'auto' if _carousel_auto() else 'manual',
                   'supportedRows': [1,
                                     2,
@@ -1563,6 +1617,10 @@ def _patch_vehicle_statistics_presenter():
     def patched_update_vehicles(self, vehicles):
         if original_update_vehicles:
             original_update_vehicles(self, vehicles)
+        try:
+            _apply_auto_rows(len(vehicles) if vehicles is not None else None)
+        except Exception:
+            LOGGER.exception('Unable to apply automatic rows from statistics presenter')
         _refresh_all_models('statistics presenter update')
 
     VehiclesStatisticsPresenter.__init__ = patched_init

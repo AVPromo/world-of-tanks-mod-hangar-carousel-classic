@@ -1,0 +1,8 @@
+- Fix settings persistence for sorting criteria, nation order, and type order (empty inputs now clear old values reliably).
+- Card stats pipeline reworked for stability: average damage from RandomStats dossier data, MoE as percentage value (+ derived level), and improved alpha-damage fallback chain via vehicle parameter sources.
+- Sorting robustness updated for MoE percentage handling and high-vehicle refresh scenarios (dossier fetch limit/guard tuned).
+- Mastery rendering clarified to M1/M2/M3 and ASS for level 4 in card and tooltip UI.
+- Winrate color striping removed for neutral readability.
+- Native control UI hardened against Gameface SVG/use warnings by replacing SVG-based button glyph paths in HCC controls.
+- Card stat typography readability pass: stronger outline/text-shadow and heavier weight for better contrast.
+- Default/migrated config alignment and docs/package metadata synced to 1.0.3.
