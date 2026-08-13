@@ -861,20 +861,24 @@ def _build_stats(vehicle, account_random_stats, vehicle_cuts):
 
 
 def _normalized_card_stats_config(raw_stats_config):
-    """Ensure card fields include alphaDamage while preserving configured order."""
+    """Validate selectable card-stat fields while preserving configured order."""
     stats_config = dict(raw_stats_config or {})
     fields = stats_config.get('fields', [])
     if not isinstance(fields, list):
         fields = []
+    allowed_fields = ('battles', 'winRate', 'averageDamage', 'alphaDamage', 'mastery', 'marksOnGun')
     normalized_fields = []
     seen = set()
     for field in fields:
-        if isinstance(field, basestring) and field and field not in seen:
+        if isinstance(field, basestring) and field in allowed_fields and field not in seen:
             normalized_fields.append(field)
             seen.add(field)
-    if 'alphaDamage' not in seen:
-        normalized_fields.append('alphaDamage')
     stats_config['fields'] = normalized_fields
+    stats_config['enabled'] = bool(stats_config.get('enabled', True))
+    try:
+        stats_config['minimumBattles'] = max(0, int(stats_config.get('minimumBattles', 1)))
+    except Exception:
+        stats_config['minimumBattles'] = 1
     return stats_config
 
 
@@ -1658,6 +1662,7 @@ def _settings_tooltip(title, body):
 
 SETTINGS_TEXT = {'en': {'display': u'Carousel and cards',
     'sorting': u'Sorting (XVM-compatible)',
+    'cardStatsFields': u'Card statistics fields',
     'native': u'Already provided by the client: Premium, Elite, rented/temporary, daily bonus and Battle Pass points available.',
     'enabled': u'Enable Hangar Carousel Classic',
     'cardStats': u'Show statistics on vehicle cards',
@@ -1690,6 +1695,8 @@ def _register_settings():
         nations_order = CONFIG.get('sorting', {}).get('nations_order', [])
         types_order = CONFIG.get('sorting', {}).get('types_order', [])
         rows_value = 0 if _carousel_auto() else _carousel_rows() or 2
+        card_stats = _normalized_card_stats_config(CONFIG.get('cardStats', {}))
+        card_stat_fields = card_stats.get('fields', [])
         
         # Format for display in UI (join with commas)
         criteria_str = ', '.join(sorting_criteria) if sorting_criteria else ', '.join(_default_sorting_criteria())
@@ -1698,8 +1705,15 @@ def _register_settings():
         
         # Build UI columns
         column1 = [templates.createLabel(text['display']),
-         templates.createCheckbox(text['cardStats'], 'cardStatsEnabled', bool(CONFIG.get('cardStats', {}).get('enabled', True))),
-         templates.createNumericStepper(text['minBattles'], 'minimumBattles', int(CONFIG.get('cardStats', {}).get('minimumBattles', 1)), 0, 1000, 1, manual=True),
+         templates.createCheckbox(text['cardStats'], 'cardStatsEnabled', bool(card_stats.get('enabled', True))),
+         templates.createNumericStepper(text['minBattles'], 'minimumBattles', int(card_stats.get('minimumBattles', 1)), 0, 1000, 1, manual=True),
+         templates.createLabel(text['cardStatsFields']),
+         templates.createCheckbox(u'Battles', 'showBattles', 'battles' in card_stat_fields),
+         templates.createCheckbox(u'Win rate', 'showWinRate', 'winRate' in card_stat_fields),
+         templates.createCheckbox(u'Average damage', 'showAverageDamage', 'averageDamage' in card_stat_fields),
+         templates.createCheckbox(u'Alpha damage', 'showAlphaDamage', 'alphaDamage' in card_stat_fields),
+         templates.createCheckbox(u'Mastery badge', 'showMastery', 'mastery' in card_stat_fields),
+         templates.createCheckbox(u'Marks of Excellence', 'showMarksOnGun', 'marksOnGun' in card_stat_fields),
          templates.createDropdown(text['rows'], 'carouselRows', [text['auto'],
           u'1',
           u'2',
@@ -1717,7 +1731,7 @@ def _register_settings():
          templates.createCheckbox(text['hideRestoreTank'], 'hideRestoreTank', bool(CONFIG.get('actionCards', {}).get('hideRestoreTank', False)))]
         
         template = {'modDisplayName': u'Hangar Carousel Classic',
-         'settingsVersion': 4,
+         'settingsVersion': 5,
          'enabled': bool(CONFIG.get('enabled', True)),
          'column1': column1,
          'column2': column2}
@@ -1769,6 +1783,17 @@ def _on_settings_changed(linkage, settings):
         if card_stats is not None:
             card_stats['enabled'] = bool(settings.get('cardStatsEnabled', True))
             card_stats['minimumBattles'] = max(0, int(settings.get('minimumBattles', 1)))
+            field_settings = (
+                ('battles', 'showBattles'),
+                ('winRate', 'showWinRate'),
+                ('averageDamage', 'showAverageDamage'),
+                ('alphaDamage', 'showAlphaDamage'),
+                ('mastery', 'showMastery'),
+                ('marksOnGun', 'showMarksOnGun')
+            )
+            current_fields = _normalized_card_stats_config(card_stats).get('fields', [])
+            card_stats['fields'] = [field for field, setting_key in field_settings
+                                    if bool(settings.get(setting_key, field in current_fields))]
         sorting = CONFIG.setdefault('sorting', {})
         if sorting is not None:
             sorting['enabled'] = bool(settings.get('sortingEnabled', True))

@@ -170,40 +170,39 @@ function winRateBand(value) {
 
 function statRows(stats) {
   const fields = state.statsConfig?.fields || [];
-  const rows = [];
-  const compact = [];
+  const items = [];
   if (fields.includes("battles")) {
-    compact.push({ classes: ["battles"], text: `${labels().stat_battles} ${formatCompact(stats.battles)}` });
+    items.push({ classes: ["battles"], text: `${labels().stat_battles} ${formatCompact(stats.battles)}` });
   }
   if (fields.includes("winRate")) {
     const winRate = Number(stats.winRate || 0);
-    compact.push({
+    items.push({
       classes: ["win-rate"],
       text: `${labels().stat_win_rate} ${winRate.toFixed(1)}%`
     });
   }
   if (fields.includes("averageDamage")) {
-    compact.push({ classes: ["damage"], text: `${labels().stat_damage} ${formatCompact(stats.averageDamage)}` });
+    items.push({ classes: ["damage"], text: `${labels().stat_damage} ${formatCompact(stats.averageDamage)}` });
   }
   if (fields.includes("alphaDamage")) {
-    compact.push({ classes: ["alpha-damage"], text: `${labels().stat_alpha_damage} ${formatCompact(stats.alphaDamage)}` });
+    items.push({ classes: ["alpha-damage"], text: `${labels().stat_alpha_damage} ${formatCompact(stats.alphaDamage)}` });
   }
-  for (let index = 0; index < compact.length; index += 2) {
-    rows.push(compact.slice(index, index + 2));
-  }
-  const achievements = [];
   if (fields.includes("mastery")) {
     const mastery = Number(stats.mastery || 0);
-    achievements.push({ classes: ["mastery", `mastery-${mastery}`], text: masteryLabel(mastery) });
+    items.push({ classes: ["mastery", `mastery-${mastery}`], text: masteryLabel(mastery) });
   }
   if (fields.includes("marksOnGun")) {
     const marks = Number(stats.marksOnGun || 0);
     const level = marksLevel(stats);
     const classes = ["marks"];
     if (level > 0) classes.push(`marks-${level}`);
-    achievements.push({ classes, text: `${labels().stat_marks} ${marks.toFixed(2)}%` });
+    items.push({ classes, text: `${labels().stat_marks} ${marks.toFixed(2)}%` });
   }
-  if (achievements.length) rows.push(achievements);
+
+  const rows = [];
+  for (let index = 0; index < items.length; index += 2) {
+    rows.push(items.slice(index, index + 2));
+  }
   return rows;
 }
 
