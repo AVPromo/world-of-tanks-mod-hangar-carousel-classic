@@ -31,7 +31,7 @@ Copy-Item -LiteralPath $gameface -Destination (Join-Path $modsRoot 'net.openwg\n
 Remove-Item -LiteralPath $outputPath -Force -ErrorAction SilentlyContinue
 Add-Type -AssemblyName System.IO.Compression
 Add-Type -AssemblyName System.IO.Compression.FileSystem
-[IO.Compression.ZipFile]::CreateFromDirectory($releaseRoot, $outputPath, [IO.Compression.CompressionLevel]::Optimal, $false)
+[IO.Compression.ZipFile]::CreateFromDirectory($releaseRoot, $outputPath, [IO.Compression.CompressionLevel]::NoCompression, $false)
 
 $archive = [IO.Compression.ZipFile]::OpenRead($outputPath)
 try {
