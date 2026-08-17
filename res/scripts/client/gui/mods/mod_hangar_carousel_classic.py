@@ -5,11 +5,13 @@ syntax. Custom filter predicates narrow the native vehicle-statistics model;
 the Gameface layer supplies independent toggles and card overlays.
 """
 from __future__ import absolute_import, division
+import hashlib
 import io
 import json
 import logging
 import os
 import time
+import zipfile
 import BigWorld
 import BattleReplay
 from PlayerEvents import g_playerEvents
@@ -48,6 +50,17 @@ CSS_URL = 'coui://gui/gameface/mods/hcc/hangar_carousel_classic/hangar_carousel_
 TOOLTIP_JS_URL = 'coui://gui/gameface/mods/hcc/hangar_carousel_classic/hangar_carousel_classic.tooltip.js'
 TOOLTIP_CSS_URL = 'coui://gui/gameface/mods/hcc/hangar_carousel_classic/hangar_carousel_classic.tooltip.css'
 LOGGER = logging.getLogger('HangarCarouselClassic')
+NATIVE_RESOURCE_HASHES = (
+        ('res/packages/gui-part3.pkg', 'gui/gameface/_dist/production/mono/hangar/views/main/main.html/bundle.js',
+         ('753102BFFDFE1A52B23706606F804CAC236463CB1A827A0EA3449E1D263FC6CE',
+            '21B48CFFF0EDA9247413338CBEF3EDC2DD7BE0D1B6504F67AF05E163A22DF1A6',
+            '21C58DA5788BDDF31655B3510B027505A2418355D299D50773E6F414F28779D0')),
+        ('res/packages/gui-part4.pkg', 'gui/gameface/_dist/production/mono/hangar/views/vehicle_tooltip/vehicle_tooltip.html/bundle.js',
+         ('B1CBC96E18174947F5CC83E46A5511924DA9D7AEF139DFA8CB75AA79B366DA4E',
+            '66AACCC3D55B62EFC6264359F133D51F04270A8E7E737FE1BB2FFB6461ECC1E4')),
+        ('res/packages/gui-part2.pkg', 'gui/gameface/_dist/production/mono/hangar/vehicle_tooltip/vehicle_tooltip.css',
+         ('4D9D45F739F642F5CCD443386722045F319EC873352B159B36BAEA210249D822',))
+)
 DEFAULT_CONFIG = {'schemaVersion': 5,
  'enabled': True,
  'tankfilters': {'bonus': {'enabled': True},
@@ -323,6 +336,7 @@ DOSSIER_CACHE = {}
 DOSSIER_CACHE_GENERATION = 0
 DOSSIER_FETCH_COUNTER = 0
 MAX_DOSSIER_FETCHES_PER_REFRESH = 256
+COMPATIBILITY_WARNING_SHOWN = False
 
 def _register_callback(delay, callback):
     try:
@@ -331,6 +345,32 @@ def _register_callback(delay, callback):
         return callback_id
     except Exception:
         LOGGER.exception('Unable to schedule callback %s', getattr(callback, '__name__', callback))
+
+
+def _check_native_client_compatibility():
+    global COMPATIBILITY_WARNING_SHOWN
+    if COMPATIBILITY_WARNING_SHOWN:
+        return
+    try:
+        game_root = os.getcwd()
+        for package_rel_path, entry_path, supported_hashes in NATIVE_RESOURCE_HASHES:
+            package_path = os.path.join(game_root, package_rel_path)
+            if not os.path.isfile(package_path):
+                return
+            archive = zipfile.ZipFile(package_path, 'r')
+            try:
+                source = archive.read(entry_path)
+            finally:
+                archive.close()
+            if hashlib.sha256(source).hexdigest().upper() not in supported_hashes:
+                COMPATIBILITY_WARNING_SHOWN = True
+                from gui import SystemMessages
+                SystemMessages.pushMessage(
+                    u'[Hangar Carousel Classic] Your World of Tanks client was updated. Please install a compatible mod update.',
+                    type=SystemMessages.SM_TYPE.Warning)
+                return
+    except Exception:
+        LOGGER.debug('Unable to verify native client resources', exc_info=True)
 
 
 def _invalidate_dossier_cache(reason='unknown'):
@@ -1535,6 +1575,13 @@ def _patch_vehicle_tooltip():
     CarouselVehicleTooltipModel._hcc_patched = True
 
 
+def _is_frontline_filter(provider):
+    carousel_filter = getattr(provider, '_VehicleFiltersDataProvider__carouselFilter', None)
+    filter_class = getattr(carousel_filter, '__class__', None)
+    filter_module = getattr(filter_class, '__module__', '')
+    return filter_module.startswith('frontline.')
+
+
 def _patch_vehicle_filters_provider():
     if getattr(VehicleFiltersDataProvider, '_hcc_rows_patched', False):
         return
@@ -1544,6 +1591,8 @@ def _patch_vehicle_filters_provider():
 
     def patched_on_loading(self, *args, **kwargs):
         result = original_on_loading(self, *args, **kwargs)
+        if _is_frontline_filter(self):
+            return result
         _add_safe_provider(FILTER_PROVIDERS, self, max_size=50)
         try:
             with self.viewModel.transaction() as model:
@@ -1577,20 +1626,14 @@ def _patch_vehicle_filters_provider():
             original_finalize(self)
 
     def patched_type_changed(self, args):
+        if _is_frontline_filter(self):
+            return original_type_changed(self, args)
         rows = max(1, min(4, int(args.get('rowCount', 2))))
         if bool(args.get('hccAuto', False) or args.get('hcpAuto', False)):
             _set_carousel_rows(rows, automatic=True)
             return None
         elif rows <= 2:
-            result = original_type_changed(self, {'rowCount': rows})
-            RUNTIME_STATE['carouselRows'] = rows
-            RUNTIME_STATE['carouselRowsMode'] = 'manual'
-            _save_runtime()
-            _sync_carousel_auto_property(False)
-            for model in list(MODELS):
-                model.refresh()
-
-            return result
+            return original_type_changed(self, {'rowCount': rows})
         else:
             _set_carousel_rows(rows)
             return None
@@ -1852,6 +1895,7 @@ if CONFIG.get('enabled', True):
         g_playerEvents.onAvatarReady += _track_last_played
         if hasattr(g_playerEvents, 'onAccountBecomePlayer'):
             g_playerEvents.onAccountBecomePlayer += _on_account_become_player
+        _register_callback(1.0, _check_native_client_compatibility)
         LOGGER.info('Hangar Carousel Classic %s loaded', MOD_VERSION)
     except Exception:
         LOGGER.exception('Hangar Carousel Classic failed to initialize')

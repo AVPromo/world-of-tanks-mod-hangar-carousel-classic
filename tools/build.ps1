@@ -10,9 +10,15 @@ $repo = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $build = Join-Path $repo 'build'
 $stage = Join-Path $build 'stage'
 $dist = Join-Path $repo 'dist'
-$version = '1.0.6'
+$metaPath = Join-Path $repo 'meta.xml'
+[xml]$meta = Get-Content -LiteralPath $metaPath -Raw
+$version = [string]$meta.root.version
+if ([string]::IsNullOrWhiteSpace($version)) {
+    throw "Version missing in $metaPath"
+}
 $packageName = "mod_hangar_carousel_classic_$version.wotmod"
 $packagePath = Join-Path $dist $packageName
+$packagePathUnversioned = Join-Path $dist 'mod_hangar_carousel_classic.wotmod'
 
 function Resolve-GameRoot {
     param([string]$PreferredRoot)
@@ -98,10 +104,18 @@ if ($LASTEXITCODE -ne 0) {
     throw 'WoT package creation failed.'
 }
 
+Remove-Item -LiteralPath $packagePathUnversioned -Force -ErrorAction SilentlyContinue
+& $Python27 (Join-Path $PSScriptRoot 'package_wotmod.py') $stage $packagePathUnversioned
+if ($LASTEXITCODE -ne 0) {
+    throw 'Unversioned WoT package creation failed.'
+}
+
 & (Join-Path $PSScriptRoot 'validate.ps1') -PackagePath $packagePath
+& (Join-Path $PSScriptRoot 'validate.ps1') -PackagePath $packagePathUnversioned
 & (Join-Path $PSScriptRoot 'build-full.ps1') -PackagePath $packagePath -Version $version
 if ($Install) {
     & (Join-Path $PSScriptRoot 'install.ps1') -GameRoot $GameRoot -PackagePath $packagePath
 }
 
 Write-Output $packagePath
+Write-Output $packagePathUnversioned
