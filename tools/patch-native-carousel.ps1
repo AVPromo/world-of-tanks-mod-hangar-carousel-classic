@@ -14,7 +14,8 @@ $entryPath = 'gui/gameface/_dist/production/mono/hangar/views/main/main.html/bun
 $supportedHashes = @(
     '753102BFFDFE1A52B23706606F804CAC236463CB1A827A0EA3449E1D263FC6CE', # WoT 2.3.1.0
     '21B48CFFF0EDA9247413338CBEF3EDC2DD7BE0D1B6504F67AF05E163A22DF1A6', # WoT 2.3.1.1
-    '21C58DA5788BDDF31655B3510B027505A2418355D299D50773E6F414F28779D0'  # WoT 2.3.1.2
+    '21C58DA5788BDDF31655B3510B027505A2418355D299D50773E6F414F28779D0', # WoT 2.3.1.2
+    'A0D8375A7733B09BD71C7A291167AC7713780DF1438371EF9777E902E3971551'  # WoT 2.3.1.3
 )
 
 Add-Type -AssemblyName System.IO.Compression
@@ -74,8 +75,8 @@ $replacements = @(
         'carouselTypeChange:n.createCallback(e=>"object"==typeof e?e:{rowCount:e,hccAuto:!1},"onCarouselTypeChange")'
     ),
     @(
-        'onClick:function(){const e=1===a?2:1;t.controls.carouselTypeChange(e)},children:o.jsx(Le,{className:l(cb.carouselIcon,2===a&&cb.carouselIcon__active),path:"hangar.filter.carousel_selector"})',
-        'onClick:function(){const e=a>=4?1:a+1;t.controls.carouselTypeChange(e)},children:o.jsx(Le,{className:l(cb.carouselIcon,1<a&&cb.carouselIcon__active),path:"hangar.filter.carousel_selector"})'
+        'onClick:function(){const e=1===a?2:1;t.controls.carouselTypeChange(e)},children:o.jsx(Te,{className:l(cb.carouselIcon,2===a&&cb.carouselIcon__active),path:"hangar.filter.carousel_selector"})',
+        'onClick:function(){const e=a>=4?1:a+1;t.controls.carouselTypeChange(e)},children:o.jsx(Te,{className:l(cb.carouselIcon,1<a&&cb.carouselIcon__active),path:"hangar.filter.carousel_selector"})'
     ),
     @(
         'return xt(2===e?t.double:t.single)',
