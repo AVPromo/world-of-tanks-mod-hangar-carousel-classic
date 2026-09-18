@@ -165,6 +165,9 @@ try {
     if ($cssSource.Contains('calc(')) {
         throw 'Unsupported Gameface calc() expression found.'
     }
+    if ($cssSource -match ':not\(' -or $cssSource -match ':disabled') {
+        throw 'Unsupported Gameface CSS pseudo-class found (:not/:disabled).'
+    }
     if (-not $cssSource.Contains('.hcc-carousel-rows-3') -or
         -not $cssSource.Contains('.hcc-carousel-rows-4') -or
         -not $cssSource.Contains('--card-width: 50%')) {

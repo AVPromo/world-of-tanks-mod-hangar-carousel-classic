@@ -7,9 +7,13 @@
   pointer-events: auto;
 }
 
-html:not(.hcc-carousel-ready) [class*="Page_carousel_"],
-body:not(.hcc-carousel-ready) [class*="Page_carousel_"] {
+[class*="Page_carousel_"] {
   visibility: hidden !important;
+}
+
+html.hcc-carousel-ready [class*="Page_carousel_"],
+body.hcc-carousel-ready [class*="Page_carousel_"] {
+  visibility: visible !important;
 }
 
 .hcc-native-heading {
@@ -20,7 +24,7 @@ body:not(.hcc-carousel-ready) [class*="Page_carousel_"] {
   text-transform: uppercase;
 }
 
-.hcc-native-heading:not(:first-child) {
+.hcc-native-heading ~ .hcc-native-heading {
   margin-top: 8rem;
 }
 
@@ -267,9 +271,9 @@ body:not(.hcc-carousel-ready) [class*="Page_carousel_"] {
   stroke: #fff !important;
 }
 
-.hcc-native-filter:disabled,
-.hcc-native-icon-button:disabled,
-.hcc-native-row-button:disabled {
+.hcc-native-filter[disabled],
+.hcc-native-icon-button[disabled],
+.hcc-native-row-button[disabled] {
   cursor: default;
   opacity: 0.45;
 }
