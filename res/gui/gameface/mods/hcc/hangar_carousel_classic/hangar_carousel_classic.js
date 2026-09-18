@@ -6,6 +6,8 @@ const LABELS = {
     filters: "HCC filters",
     filter_count_description: "ALL shows the vehicles matching every active filter; each filter count shows the matching vehicles within that current selection.",
     filter_all: "All vehicles",
+    filter_more_credits: "More credits",
+    filter_postprogression_not_full: "Field modifications incomplete",
     filter_non_elite: "Non-elite tanks",
     filter_not_ready: "Broken / crew incomplete",
     filter_marks_incomplete: "Marks incomplete (Tier V+)",
@@ -54,6 +56,8 @@ const FILTER_SVG_NS = "http://www.w3.org/2000/svg";
 
 const FILTER_ICONS = {
   all: '<path d="M4 6h16M4 12h16M4 18h16"/>',
+  more_credits: '<path d="M12 3v18M16.5 7.5c0-1.7-2-3-4.5-3s-4.5 1.3-4.5 3 1.7 2.6 4.5 3 4.5 1.3 4.5 3-2 3-4.5 3-4.5-1.3-4.5-3"/>',
+  postprogression_not_full: '<path d="M12 3l2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-2.9-5.6 2.9 1.1-6.2L3 9.6l6.2-.9L12 3z"/>',
   non_elite: '<rect x="12" y="4.2" width="11" height="11" rx="1.5" transform="rotate(45 12 12)"/>',
   not_ready: '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>',
   marks_incomplete: '<circle cx="12" cy="8" r="5.2"/><path d="M8.4 12.9L7 21l5-2.8L17 21l-1.4-8.1"/>',

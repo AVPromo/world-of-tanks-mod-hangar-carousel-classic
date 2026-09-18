@@ -12,7 +12,8 @@ $OutputPath = [IO.Path]::GetFullPath($OutputPath)
 $packagePath = Join-Path $GameRoot 'res\packages\gui-part3.pkg'
 $entryPath = 'gui/gameface/_dist/production/mono/hangar/views/main/main.html/bundle.js'
 $supportedHashes = @(
-    '98D4D4060C141B5728F9126E4B43AD9E0E0BD6BA3FC72E14156391DB54737FBA'  # WoT 2.4.0.0
+    '98D4D4060C141B5728F9126E4B43AD9E0E0BD6BA3FC72E14156391DB54737FBA', # WoT 2.4.0.0
+    '8FF6818718F1DBB5E6954F83B3C64E3CB32B584F771BA7AF5355EF81AC803902'  # WoT 2.4.0.1
 )
 
 Add-Type -AssemblyName System.IO.Compression

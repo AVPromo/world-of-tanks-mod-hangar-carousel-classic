@@ -27,6 +27,8 @@ from gui.impl.lobby.hangar.presenters.vehicle_playlists_presenter import Vehicle
 from gui.impl.lobby.tooltips.carousel_vehicle_tooltip import CarouselVehicleTooltipView
 from gui.shared.items_parameters import params_helper as items_params_helper
 from gui.veh_post_progression.models.progression import PostProgressionCompletion
+from gui.veh_post_progression.models.ext_money import ExtendedMoney
+from gui.veh_post_progression.models.progression_step import PostProgressionStepState
 from helpers import dependency
 from openwg_gameface import gf_mod_inject
 from skeletons.gui.game_control import IBattlePassController, IVehiclePlaylistsController
@@ -73,7 +75,9 @@ NATIVE_RESOURCE_HASHES = (
 DEFAULT_CONFIG = {'schemaVersion': 5,
  'enabled': True,
  'filtering': {'enabled': True},
- 'tankfilters': {'non_elite': {'enabled': False},
+ 'tankfilters': {'more_credits': {'enabled': False},
+                 'postprogression_not_full': {'enabled': False},
+                 'non_elite': {'enabled': False},
                  'not_ready': {'enabled': False},
                  'marks_incomplete': {'enabled': False},
                  'crew_not_maxed': {'enabled': False}},
@@ -111,7 +115,7 @@ class _Services(object):
 
 
 SERVICES = _Services()
-FILTER_ORDER = ('all', 'non_elite', 'not_ready', 'marks_incomplete', 'crew_not_maxed')
+FILTER_ORDER = ('all', 'more_credits', 'postprogression_not_full', 'non_elite', 'not_ready', 'marks_incomplete', 'crew_not_maxed')
 SORT_CRITERIA_ORDER = ('nation', 'type', 'level', '-level', 'maxBattleTier', '-maxBattleTier', 'premium', '-premium',
                        'battles', '-battles', 'winRate', '-winRate', 'markOfMastery', '-markOfMastery',
                        'averageDamage', '-averageDamage', 'alphaDamage', '-alphaDamage', 'marksOnGun', '-marksOnGun',
@@ -1418,7 +1422,20 @@ def _matches(filter_id, vehicle):
     """Check if vehicle matches the given filter."""
     if filter_id == 'all':
         return True
-    if filter_id == 'non_elite':
+    if filter_id == 'more_credits':
+        return bool(getattr(vehicle, 'isPremium', False) and
+                    not getattr(vehicle, 'isSpecial', False) and
+                    not getattr(vehicle, 'isOnlyForEpicBattles', False))
+    elif filter_id == 'postprogression_not_full':
+        try:
+            if int(vehicle.level) <= 5:
+                return False
+            post_progression = getattr(vehicle, 'postProgression', None)
+            return post_progression is not None and post_progression.getCompletion() != PostProgressionCompletion.FULL
+        except (AttributeError, TypeError, ValueError):
+            LOGGER.exception('Unable to evaluate field-modification filter for vehicle %s', getattr(vehicle, 'intCD', '?'))
+            return False
+    elif filter_id == 'non_elite':
         return not bool(getattr(vehicle, 'isElite', False))
     elif filter_id == 'not_ready':
         try:
@@ -2047,6 +2064,10 @@ def _settings_tooltip(title, body):
 SETTINGS_TEXT = {'en': {'display': u'Carousel and cards',
     'filtering': u'Filtering',
     'filteringTooltip': u'Enable or disable filtering. Individual filters can be toggled here in MSA or in the HCC filter panel. Counts use the current native vehicle list: ALL shows vehicles matching every active filter, and each filter count shows matching vehicles within that current selection. HCC changes synchronize the MSA values and vehicle list; MSA changes synchronize the HCC panel and vehicle list.',
+    'filterMoreCredits': u'More credits',
+    'filterMoreCreditsTooltip': u'Show only premium vehicles that earn more credits and are not special or Epic Battles-only vehicles.',
+    'filterPostprogressionNotFull': u'Field modifications incomplete',
+    'filterPostprogressionNotFullTooltip': u'Show only Tier VI or higher vehicles whose field modifications are not complete.',
     'filterNonElite': u'Non-elite tanks',
     'filterNonEliteTooltip': u'Show only vehicles that do not have elite status.',
     'filterNotReady': u'Broken / crew incomplete',
@@ -2172,6 +2193,8 @@ def _register_settings():
          u'4'], rows_value, tooltip=_settings_tooltip(text['rows'], text['rowsTooltip']))]
         
         filter_settings = (
+            ('more_credits', 'filterMoreCredits', 'filterMoreCreditsTooltip'),
+            ('postprogression_not_full', 'filterPostprogressionNotFull', 'filterPostprogressionNotFullTooltip'),
             ('non_elite', 'filterNonElite', 'filterNonEliteTooltip'),
             ('not_ready', 'filterNotReady', 'filterNotReadyTooltip'),
             ('marks_incomplete', 'filterMarksIncomplete', 'filterMarksIncompleteTooltip'),

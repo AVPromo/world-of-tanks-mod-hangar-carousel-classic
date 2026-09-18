@@ -2,6 +2,8 @@
   "schemaVersion": 5,
   "enabled": true,
   "tankfilters": {
+    "more_credits": { "enabled": false },
+    "postprogression_not_full": { "enabled": false },
     "bonus": { "enabled": true },
     "elite": { "enabled": true },
     "premium": { "enabled": true },
