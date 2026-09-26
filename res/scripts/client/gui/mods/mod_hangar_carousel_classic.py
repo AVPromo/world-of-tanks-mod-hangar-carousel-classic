@@ -21,6 +21,7 @@ from dossiers2.ui.achievements import MARK_ON_GUN_RECORD
 from frameworks.wulf import ViewModel
 from gui.impl.gen.view_models.views.lobby.hangar.sub_views.vehicle_filter_model import VehicleFilterModel
 from gui.impl.gen.view_models.views.lobby.tooltips.carousel_vehicle_tooltip_model import CarouselVehicleTooltipModel
+import gui.impl.lobby.hangar.presenters.vehicle_filters_presenter as vehicle_filters_presenter_module
 from gui.impl.lobby.hangar.presenters.vehicle_filters_presenter import VehicleFiltersDataProvider
 from gui.impl.lobby.hangar.presenters.vehicle_statistics_presenter import VehiclesStatisticsPresenter
 from gui.impl.lobby.hangar.presenters.vehicle_playlists_presenter import VehiclePlaylistsPresenter
@@ -44,20 +45,28 @@ try:
 except Exception:
     carousel_filter_module = None
 MOD_ID = 'mod_hangar_carousel_classic'
-MOD_VERSION = '1.0.16'
+MOD_VERSION = '1.0.19'
 MOD_LINKAGE_ID = 'mod_hangar.carousel.classic'
 PLAYLIST_ID_PREFIX = 'mhcc_'
 PREFERENCES_DIR = getPreferencesDirPath()
 CONFIG_PATH = os.path.join(PREFERENCES_DIR, 'mods', 'mod_hangar_carousel_classic', 'config.json')
 RUNTIME_PATH = os.path.join(PREFERENCES_DIR, 'mods', 'mod_hangar_carousel_classic', 'runtime.json')
-LEGACY_CONFIG_PATH = os.path.join('res_mods', 'configs', 'hangar_carousel_classic', 'config.json')
-LEGACY_RUNTIME_PATH = os.path.join('res_mods', 'configs', 'hangar_carousel_classic', 'runtime.json')
+LEGACY_CONFIG_PATH = os.path.join('mods', 'configs', 'hangar_carousel_classic', 'config.json')
+LEGACY_RUNTIME_PATH = os.path.join('mods', 'configs', 'hangar_carousel_classic', 'runtime.json')
 CONFIG_NEEDS_SAVE = False
 JS_URL = 'coui://gui/gameface/mods/hcc/hangar_carousel_classic/hangar_carousel_classic.js'
 CSS_URL = 'coui://gui/gameface/mods/hcc/hangar_carousel_classic/hangar_carousel_classic.css'
 TOOLTIP_JS_URL = 'coui://gui/gameface/mods/hcc/hangar_carousel_classic/hangar_carousel_classic.tooltip.js'
 TOOLTIP_CSS_URL = 'coui://gui/gameface/mods/hcc/hangar_carousel_classic/hangar_carousel_classic.tooltip.css'
-LOGGER = logging.getLogger('HangarCarouselClassic')
+
+
+class _ModLoggerAdapter(logging.LoggerAdapter):
+
+    def process(self, msg, kwargs):
+        return u'[mod_hangar_carousel_classic] %s' % msg, kwargs
+
+
+LOGGER = _ModLoggerAdapter(logging.getLogger('HangarCarouselClassic'), {})
 NATIVE_RESOURCE_HASHES = (
         ('res/packages/gui-part3.pkg', 'gui/gameface/_dist/production/mono/hangar/views/main/main.html/bundle.js',
          ('753102BFFDFE1A52B23706606F804CAC236463CB1A827A0EA3449E1D263FC6CE',
@@ -360,7 +369,7 @@ LAST_PAYLOAD = None
 LAST_PAYLOAD_SIGNATURE = None
 LEGACY_PLAYLISTS_REMOVED = False
 TOOLTIP_PAYLOAD_LOGGED = False
-ALLOWED_HANGAR_PREFIXES = ('spaces/hangar_v4',)
+ALLOWED_HANGAR_PREFIXES = ('spaces/hangar_v4', 'spaces/h33_comp7')
 HANGAR_GUARD_STATE = {'active': None, 'spacePath': None}
 SETTINGS_REGISTERED = False
 MSA_API = None
@@ -1868,11 +1877,11 @@ def _is_allowed_hangar_path(space_path):
 
 
 def _is_hangar_context_active():
-    """Keep the mod out of event hangars such as Onslaught (spaces/h33_comp7).
+    """Enable the mod only in hangars with a supported carousel integration.
 
     Fail-closed while the hangar space is still loading, because the client
     restores the last used game mode on startup and may open an event hangar
-    directly.  Space events re-evaluate the state as soon as it is known.
+    directly. Space events re-evaluate the state as soon as it is known.
     """
     if dependency is None or IHangarSpace is None:
         return True
@@ -1914,9 +1923,10 @@ def _reapply_provider_carousel_state(provider):
         LOGGER.exception('Unable to sync HCC properties in VehicleFilterModel')
     try:
         rows = _effective_carousel_rows() if _carousel_auto() else _carousel_rows() or 2
-        if rows != _provider_row_count(provider):
-            LAST_PAYLOAD_SIGNATURE = None
-            _sync_provider_row_count(provider, rows, force=True)
+        LAST_PAYLOAD_SIGNATURE = None
+        if _sync_provider_row_count(provider, rows, force=True):
+            LOGGER.info('Reapplied %d HCC carousel rows to %s after hangar activation',
+                        rows, provider.__class__.__name__)
     except Exception:
         LOGGER.exception('Unable to reapply HCC carousel row configuration')
 
@@ -1956,8 +1966,15 @@ def _bind_hangar_space_events():
 def _patch_vehicle_filters_provider():
     if getattr(VehicleFiltersDataProvider, '_hcc_rows_patched', False):
         return
+    row_count_types = getattr(vehicle_filters_presenter_module, '_CAROUSEL_ROW_COUNT_TYPE', None)
+    if isinstance(row_count_types, dict) and 2 in row_count_types:
+        row_count_types[3] = row_count_types[2]
+        row_count_types[4] = row_count_types[2]
+    else:
+        LOGGER.warning('Native carousel row-count mapping unavailable; 3/4-row selector changes may fail')
     original_on_loading = VehicleFiltersDataProvider._onLoading
     original_finalize = VehicleFiltersDataProvider._finalize
+    original_update_carousel = getattr(VehicleFiltersDataProvider, '_VehicleFiltersDataProvider__updateCarousel', None)
 
     def patched_on_loading(self, *args, **kwargs):
         result = original_on_loading(self, *args, **kwargs)
@@ -1984,6 +2001,19 @@ def _patch_vehicle_filters_provider():
         except Exception:
             LOGGER.exception('Unable to apply HCC carousel row configuration')
         return result
+
+    if callable(original_update_carousel):
+        def patched_update_carousel(self, *args, **kwargs):
+            if not _is_provider_disabled(self) and _is_hangar_context_active():
+                rows = _effective_carousel_rows() if _carousel_auto() else _carousel_rows() or 2
+                if rows != _provider_row_count(self):
+                    setattr(self, '_VehicleFiltersDataProvider__rowCount', rows)
+                    LOGGER.info('Enforcing %d HCC carousel rows for %s', rows, self.__class__.__name__)
+            return original_update_carousel(self, *args, **kwargs)
+
+        VehicleFiltersDataProvider._VehicleFiltersDataProvider__updateCarousel = patched_update_carousel
+    else:
+        LOGGER.warning('Native carousel update method unavailable; HCC row enforcement is disabled')
 
     def patched_finalize(self):
         try:

@@ -63,6 +63,7 @@ New-Item -ItemType Directory -Force -Path `
     (Join-Path $stage 'res\scripts\client\gui\mods'), `
     (Join-Path $stage 'res\gui\gameface\mods\hcc\hangar_carousel_classic'), `
     (Join-Path $stage 'res\gui\gameface\_dist\production\mono\hangar\views\main\main.html'), `
+    (Join-Path $stage 'res\comp7\gui\gameface\_dist\production\mono\lobby\views\hangar\hangar.html'), `
     (Join-Path $stage 'res\gui\gameface\_dist\production\mono\hangar\views\vehicle_tooltip\vehicle_tooltip.html'), `
     (Join-Path $stage 'res\gui\gameface\_dist\production\mono\hangar\vehicle_tooltip'), `
     $dist | Out-Null
@@ -91,6 +92,9 @@ Copy-Item -LiteralPath (Join-Path $repo 'res\gui\gameface\mods\hcc\hangar_carous
 & (Join-Path $PSScriptRoot 'patch-native-carousel.ps1') `
     -GameRoot $GameRoot `
     -OutputPath (Join-Path $stage 'res\gui\gameface\_dist\production\mono\hangar\views\main\main.html\bundle.js')
+& (Join-Path $PSScriptRoot 'patch-native-comp7-carousel.ps1') `
+    -GameRoot $GameRoot `
+    -OutputPath (Join-Path $stage 'res\comp7\gui\gameface\_dist\production\mono\lobby\views\hangar\hangar.html\bundle.js')
 & (Join-Path $PSScriptRoot 'patch-native-tooltip.ps1') `
     -GameRoot $GameRoot `
     -BundleOutputPath (Join-Path $stage 'res\gui\gameface\_dist\production\mono\hangar\views\vehicle_tooltip\vehicle_tooltip.html\bundle.js') `

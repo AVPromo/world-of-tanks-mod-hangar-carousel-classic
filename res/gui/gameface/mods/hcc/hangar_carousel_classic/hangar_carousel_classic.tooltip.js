@@ -155,7 +155,7 @@ function HCCTooltipRender() {
 
   if (!HCCTooltipRenderLogged) {
     HCCTooltipRenderLogged = true;
-    console.warn(`[HangarCarouselClassicTooltip] rendered ${items.length} statistic rows`);
+    console.warn(`[mod_hangar_carousel_classic] rendered ${items.length} statistic rows`);
   }
 
   const signature = JSON.stringify([items]);
@@ -197,7 +197,7 @@ function HCCTooltipSyncModel() {
   if (!model) return;
   if (!HCCTooltipModelLogged) {
     HCCTooltipModelLogged = true;
-    console.warn("[HangarCarouselClassicTooltip] statistics model connected");
+    console.warn("[mod_hangar_carousel_classic] statistics model connected");
   }
   const stateJson = String(HCCTooltipUnwrap(model.stateJson) || "{}");
   if (stateJson === HCCTooltipStateJson) return;
@@ -205,14 +205,14 @@ function HCCTooltipSyncModel() {
   try {
     HCCTooltipState = JSON.parse(stateJson);
   } catch (error) {
-    console.error("[HangarCarouselClassic] Invalid tooltip state JSON", error);
+    console.error("[mod_hangar_carousel_classic] Invalid tooltip state JSON", error);
     HCCTooltipState = { stats: {}, statsConfig: {} };
   }
   HCCTooltipScheduleRender();
 }
 
 engine.whenReady.then(() => {
-  console.warn("[HangarCarouselClassicTooltip] script loaded");
+  console.warn("[mod_hangar_carousel_classic] script loaded");
   const observer = new MutationObserver(HCCTooltipScheduleRender);
   observer.observe(document.body, { childList: true, subtree: true });
   window.engine.on("subViews.onAdded", HCCTooltipSyncModel);
@@ -221,4 +221,3 @@ engine.whenReady.then(() => {
   HCCTooltipSyncModel();
   HCCTooltipScheduleRender();
 });
-

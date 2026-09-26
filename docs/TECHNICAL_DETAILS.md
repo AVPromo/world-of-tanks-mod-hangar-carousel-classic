@@ -152,6 +152,9 @@ Recommended workflow:
 
 ## Compatibility and Safety
 
+- HCC carousel integration is enabled in the standard hangar (`spaces/hangar_v4`) and Onslaught/Comp 7 (`spaces/h33_comp7`). Other hangar spaces remain inactive until verified.
+- Onslaught uses the shared random-hangar vehicle filter and statistics presenters in the inspected client source. Mode-specific eligibility or layout differences still require an in-game check.
+- Three- and four-row layout CSS targets only the patched native vehicle-carousel page, so unrelated carousels in mode-specific hangar UI are not resized.
 - Defensive error handling around game services access.
 - Hot-reload cleanup for callbacks/providers/models.
 - Dossier fetch rate limiting to reduce UI blocking risk in large garages.

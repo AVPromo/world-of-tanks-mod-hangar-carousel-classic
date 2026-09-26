@@ -18,6 +18,7 @@ try {
         'res/gui/gameface/mods/hcc/hangar_carousel_classic/hangar_carousel_classic.tooltip.js',
         'res/gui/gameface/mods/hcc/hangar_carousel_classic/hangar_carousel_classic.tooltip.css',
         'res/gui/gameface/_dist/production/mono/hangar/views/main/main.html/bundle.js',
+        'res/comp7/gui/gameface/_dist/production/mono/lobby/views/hangar/hangar.html/bundle.js',
         'res/gui/gameface/_dist/production/mono/hangar/views/vehicle_tooltip/vehicle_tooltip.html/bundle.js',
         'res/gui/gameface/_dist/production/mono/hangar/vehicle_tooltip/vehicle_tooltip.css'
     )
@@ -124,6 +125,27 @@ try {
     if (-not $nativeSource.Contains('if(s?(!O(t)||a?.fromWotPlus):O(t)&&!a?.fromWotPlus)return!1;')) {
         throw 'Native rental filter does not use Classic inverted semantics.'
     }
+    $comp7Bundle = $zip.GetEntry('res/comp7/gui/gameface/_dist/production/mono/lobby/views/hangar/hangar.html/bundle.js')
+    $comp7Stream = $comp7Bundle.Open()
+    $comp7Reader = New-Object IO.StreamReader($comp7Stream, [Text.Encoding]::UTF8)
+    try {
+        $comp7Source = $comp7Reader.ReadToEnd()
+    }
+    finally {
+        $comp7Reader.Dispose()
+        $comp7Stream.Dispose()
+    }
+    if (-not $comp7Source.Contains('t+=b)e.push(N.slice(t,t+b))') -or
+        $comp7Source.Contains('for(let t=0;t<N.length;t+=2)e.push(N.slice(t,t+2))')) {
+        throw 'Comp7 carousel bundle does not contain the configured row chunker.'
+    }
+    if (-not $comp7Source.Contains('totalElements:1<b?w.length:C.length') -or
+        -not $comp7Source.Contains('return 1<b?')) {
+        throw 'Comp7 carousel bundle does not render more than two rows.'
+    }
+    if (-not $comp7Source.Contains('3===s&&"hcc-native-carousel-page--3",4===s&&"hcc-native-carousel-page--4"')) {
+        throw 'Comp7 carousel page does not expose three- and four-row layout classes.'
+    }
     $tooltipBundle = $zip.GetEntry('res/gui/gameface/_dist/production/mono/hangar/views/vehicle_tooltip/vehicle_tooltip.html/bundle.js')
     $tooltipStream = $tooltipBundle.Open()
     $tooltipReader = New-Object IO.StreamReader($tooltipStream, [Text.Encoding]::UTF8)
@@ -134,7 +156,7 @@ try {
         $tooltipReader.Dispose()
         $tooltipStream.Dispose()
     }
-    if (-not $tooltipSource.Contains('[HangarCarouselClassicTooltip] script loaded')) {
+    if (-not $tooltipSource.Contains('[mod_hangar_carousel_classic] script loaded')) {
         throw 'Native vehicle tooltip bundle does not contain the Classic renderer.'
     }
 
@@ -168,10 +190,26 @@ try {
     if ($cssSource -match ':not\(' -or $cssSource -match ':disabled') {
         throw 'Unsupported Gameface CSS pseudo-class found (:not/:disabled).'
     }
-    if (-not $cssSource.Contains('.hcc-carousel-rows-3') -or
-        -not $cssSource.Contains('.hcc-carousel-rows-4') -or
-        -not $cssSource.Contains('--card-width: 50%')) {
-        throw 'Extended carousel row-scaling rules are missing.'
+    foreach ($requiredRule in @(
+        '.hcc-native-carousel-page--3 {',
+        '.hcc-native-carousel-page--4 {',
+        'height: 220rem !important;',
+        'height: 291rem !important;',
+        'height: 241rem !important;',
+        'height: 319rem !important;',
+        'height: 274rem !important;',
+        'height: 363rem !important;',
+        'height: 334rem !important;',
+        'height: 443rem !important;'
+    )) {
+        if (-not $cssSource.Contains($requiredRule)) {
+            throw "Native carousel row-height rule is missing: $requiredRule"
+        }
+    }
+    if ($cssSource.Contains('height: auto !important;') -or
+        $cssSource.Contains('--card-height:') -or
+        $jsSource.Contains('hcc-vehicle-carousel-page--')) {
+        throw 'Unsupported carousel auto-height, card-height, or fallback-page rule found.'
     }
     if (-not $cssSource.Contains('[data-test-id="buyTank"]') -or
         -not $cssSource.Contains('.hcc-native-sort-button')) {

@@ -112,7 +112,7 @@ if (-not $dependencies) {
 
 $releaseRoot = Join-Path $repo ('build\release-{0}-full' -f $Version)
 $modsRoot = Join-Path $releaseRoot ("mods\$resolvedVersion")
-$outputPath = Join-Path $repo ('dist\hangar_carousel_classic_{0}_full.zip' -f $Version)
+$outputPath = Join-Path $repo ('dist\hangar_carousel_classic.zip' -f $Version)
 
 foreach ($source in @($PackagePath, $modMenu, $settingsBridge, $gameface)) {
     if (-not (Test-Path -LiteralPath $source)) {

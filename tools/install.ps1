@@ -46,7 +46,7 @@ if ($ForceConfig -or -not (Test-Path -LiteralPath $configPath)) {
         New-Item -ItemType Directory -Force -Path $backupDir | Out-Null
         Copy-Item -LiteralPath $configPath -Destination (Join-Path $backupDir 'config.json')
     }
-    $legacyConfig = Join-Path $GameRoot 'res_mods\configs\hangar_carousel_classic\config.json'
+    $legacyConfig = Join-Path $GameRoot 'mods\configs\hangar_carousel_classic\config.json'
     if ((-not $ForceConfig) -and (Test-Path -LiteralPath $legacyConfig)) {
         Copy-Item -LiteralPath $legacyConfig -Destination $configPath
     }

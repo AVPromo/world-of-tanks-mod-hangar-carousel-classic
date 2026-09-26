@@ -134,7 +134,7 @@ function callCommand(commandName, payload) {
     else model[commandName](payload);
     return true;
   } catch (error) {
-    console.error(`[HangarCarouselClassic] ${commandName} failed`, error);
+    console.error(`[mod_hangar_carousel_classic] ${commandName} failed`, error);
     return false;
   }
 }
@@ -151,24 +151,15 @@ function scheduleRender() {
     for (const root of [document.documentElement, document.body]) {
       if (root) root.classList.add("hcc-carousel-ready");
     }
-    applyCarouselRowsClass();
     applyActionCardsVisibility();
     renderNativeFilterPanel();
     renderCardStats();
   });
 }
 
-const CAROUSEL_ROW_CLASSES = [
-  "hcc-carousel-rows-1",
-  "hcc-carousel-rows-2",
-  "hcc-carousel-rows-3",
-  "hcc-carousel-rows-4"
-];
-
 function clearGlobalDecorations() {
   for (const root of [document.documentElement, document.body]) {
     if (!root) continue;
-    root.classList.remove(...CAROUSEL_ROW_CLASSES);
     root.classList.remove("hcc-carousel-ready");
     root.classList.remove("hcc-hide-buy-tank", "hcc-hide-buy-slot", "hcc-hide-restore-tank");
   }
@@ -178,22 +169,6 @@ function clearGlobalDecorations() {
   document.querySelectorAll(".hcc-card-stats-host").forEach((node) => {
     node.classList.remove("hcc-card-stats-host");
   });
-}
-
-function applyCarouselRowsClass() {
-  if (state.carousel?.mode === "auto") {
-    for (const root of [document.documentElement, document.body]) {
-      if (!root) continue;
-      root.classList.remove(...CAROUSEL_ROW_CLASSES);
-    }
-    return;
-  }
-  const rows = Math.max(1, Math.min(4, Number(state.carousel?.rows || 2)));
-  for (const root of [document.documentElement, document.body]) {
-    if (!root) continue;
-    root.classList.remove(...CAROUSEL_ROW_CLASSES);
-    root.classList.add(`hcc-carousel-rows-${rows}`);
-  }
 }
 
 function applyActionCardsVisibility() {
@@ -340,7 +315,7 @@ function renderCardStats() {
   const diagnostic = `${cards.length}/${matched}/${visible}/${Object.keys(state.stats || {}).length}`;
   if (diagnostic !== lastStatsDiagnostic) {
     lastStatsDiagnostic = diagnostic;
-    console.warn(`[HangarCarouselClassic] cards/matched/visible/stats: ${diagnostic}; sample: ${sampleText}`);
+    console.warn(`[mod_hangar_carousel_classic] cards/matched/visible/stats: ${diagnostic}; sample: ${sampleText}`);
   }
 }
 
@@ -590,7 +565,7 @@ function syncModel() {
       const parsedState = JSON.parse(stateJson);
       // Validate payload structure for compatibility
       if (typeof parsedState !== "object" || !("version" in parsedState)) {
-        console.warn("[HangarCarouselClassic] Invalid payload structure; expected versioned object");
+        console.warn("[mod_hangar_carousel_classic] Invalid payload structure; expected versioned object");
         state = { stats: {}, statsConfig: {}, sorting: {}, actionCards: {}, carousel: { rows: 2 }, filters: [], activeFilters: [], enabled: false, hangarActive: false };
         scheduleRender();
         return;
@@ -598,7 +573,7 @@ function syncModel() {
       state = parsedState;
       state.hangarActive = parsedState.hangarActive !== false;
     } catch (error) {
-      console.error("[HangarCarouselClassic] Invalid state JSON", error);
+      console.error("[mod_hangar_carousel_classic] Invalid state JSON", error);
       state = { stats: {}, statsConfig: {}, sorting: {}, actionCards: {}, carousel: { rows: 2 }, filters: [], activeFilters: [], enabled: false, hangarActive: false };
       scheduleRender();
       return;
