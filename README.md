@@ -29,13 +29,13 @@ For instance, you might place it in a path like `G:/Games/World_of_Tanks_EU/mods
 - Additionally, you'll need to install the corresponding `net.openwg.gameface_*.wotmod` file, 
 which can be found in the [OpenWG Gameface releases](https://gitlab.com/openwg/wot.gameface/-/releases), also into your client mods folder.
 
-- Launch the game. Use the native carousel filter popover to toggle vehicle filters. Mod Menu is optional and provides carousel, card, sorting, and action-card settings. It is not included in the full package; get it separately via [Aslain's WoT ModPack](https://aslain.com/index.php?/topic/13-download-%E2%98%85-world-of-tanks-%E2%98%85-modpack/).
+- Launch the game. Use the native carousel filter popover to toggle vehicle filters. Aslain's Mod Menu and ModsSettingsBridge are optional and are not included in the full package. Install or update them separately via [Aslain's WoT ModPack](https://aslain.com/index.php?/topic/13-download-%E2%98%85-world-of-tanks-%E2%98%85-modpack/) if you use the in-game settings menu.
 
 - Please be aware that net.openwg.gameface is essential for injecting the carousel's user interface. Mod Menu is optional and is solely used for accessing the in-game settings menu.
 
 ## Full Package Installation
 
-- If you choose the complete package, [hangar_carousel_classic_1.0.19_full.zip](https://github.com/ticzz/world-of-tanks-mod-hangar-carousel-classic/releases/download/v1.0.19/hangar_carousel_classic_1.0.19_full.zip) includes the carousel mod, `ModsSettingsBridge`, and `net.openwg.gameface`, organized within `mods/2.4.0.1/`. Extract the contents directly into the World of Tanks installation directory. Aslain's Mod Menu is optional and can be obtained separately via [Aslain's WoT ModPack](https://aslain.com/index.php?/topic/13-download-%E2%98%85-world-of-tanks-%E2%98%85-modpack/).
+- If you choose the complete package, [hangar_carousel_classic_1.0.19_full.zip](https://github.com/ticzz/world-of-tanks-mod-hangar-carousel-classic/releases/download/v1.0.19/hangar_carousel_classic_1.0.19_full.zip) includes the carousel mod and required `net.openwg.gameface`, organized within `mods/2.4.0.1/`. Extract it directly into the World of Tanks installation directory. Aslain's Mod Menu and ModsSettingsBridge are intentionally omitted so the package cannot install stale duplicate versions; get or update them separately via [Aslain's WoT ModPack](https://aslain.com/index.php?/topic/13-download-%E2%98%85-world-of-tanks-%E2%98%85-modpack/) if needed.
 
 ## Build Locally
 
