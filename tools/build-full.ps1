@@ -91,30 +91,27 @@ return $packages | Sort-Object Name -Descending | Select-Object -First 1
 }
 
 $dependencies = $null
-$modMenu = $null
 $settingsBridge = $null
 $gameface = $null
 foreach ($root in ($dependencyRoots | Select-Object -Unique)) {
-    $candidateModMenu = Select-LatestPackage $root 'aslain.modmenu_*.wotmod'
     $candidateSettingsBridge = Select-LatestPackage $root 'aslain.modssettingsbridge_*.wotmod'
     $candidateGameface = Select-LatestPackage (Join-Path $root 'net.openwg') 'net.openwg.gameface_*.wotmod'
-    if ($candidateModMenu -and $candidateSettingsBridge -and $candidateGameface) {
+    if ($candidateSettingsBridge -and $candidateGameface) {
         $dependencies = $root
-        $modMenu = $candidateModMenu.FullName
         $settingsBridge = $candidateSettingsBridge.FullName
         $gameface = $candidateGameface.FullName
         break
     }
 }
 if (-not $dependencies) {
-    throw 'No dependency bundle found. Expected aslain.modmenu_*.wotmod, aslain.modssettingsbridge_*.wotmod, and net.openwg.gameface_*.wotmod in the client mods directory or dist\mods.'
+    throw 'No dependency bundle found. Expected aslain.modssettingsbridge_*.wotmod and net.openwg.gameface_*.wotmod in the client mods directory or dist\mods.'
 }
 
 $releaseRoot = Join-Path $repo ('build\release-{0}-full' -f $Version)
 $modsRoot = Join-Path $releaseRoot ("mods\$resolvedVersion")
 $outputPath = Join-Path $repo ('dist\hangar_carousel_classic.zip' -f $Version)
 
-foreach ($source in @($PackagePath, $modMenu, $settingsBridge, $gameface)) {
+foreach ($source in @($PackagePath, $settingsBridge, $gameface)) {
     if (-not (Test-Path -LiteralPath $source)) {
         throw "Fullpack dependency is missing: $source"
     }
@@ -123,7 +120,6 @@ foreach ($source in @($PackagePath, $modMenu, $settingsBridge, $gameface)) {
 Remove-Item -LiteralPath $releaseRoot -Recurse -Force -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Force -Path (Join-Path $modsRoot 'net.openwg') | Out-Null
 Copy-Item -LiteralPath $PackagePath -Destination (Join-Path $modsRoot ([IO.Path]::GetFileName($PackagePath)))
-Copy-Item -LiteralPath $modMenu -Destination (Join-Path $modsRoot ([IO.Path]::GetFileName($modMenu)))
 Copy-Item -LiteralPath $settingsBridge -Destination (Join-Path $modsRoot ([IO.Path]::GetFileName($settingsBridge)))
 Copy-Item -LiteralPath $gameface -Destination (Join-Path $modsRoot ('net.openwg\' + [IO.Path]::GetFileName($gameface)))
 
@@ -136,11 +132,13 @@ $archive = [IO.Compression.ZipFile]::OpenRead($outputPath)
 try {
     $required = @(
         ("mods/$resolvedVersion/" + [IO.Path]::GetFileName($PackagePath)),
-        ("mods/$resolvedVersion/" + [IO.Path]::GetFileName($modMenu)),
         ("mods/$resolvedVersion/" + [IO.Path]::GetFileName($settingsBridge)),
         ("mods/$resolvedVersion/net.openwg/" + [IO.Path]::GetFileName($gameface))
     )
     $entries = @($archive.Entries | ForEach-Object { $_.FullName.Replace('\', '/') })
+    if ($entries | Where-Object { $_ -match '^mods/[^/]+/aslain\.modmenu_[^/]+\.wotmod$' }) {
+        throw 'Fullpack must not include the Aslain Mod Menu.'
+    }
     foreach ($entry in $required) {
         if ($entry -notin $entries) {
             throw "Fullpack entry is missing: $entry"
