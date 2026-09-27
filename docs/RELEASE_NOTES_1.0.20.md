@@ -1,0 +1,2 @@
+- Refresh vehicle-card statistics when the client completes dossier or account-stats synchronization, including results arriving after returning to the hangar.
+- Invalidate HCC's dossier cache before rebuilding the card-stat payload.
