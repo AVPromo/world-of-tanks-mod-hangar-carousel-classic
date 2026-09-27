@@ -42,6 +42,8 @@ Configurable fields:
 
 Minimum battles threshold is configurable.
 
+Card statistics refresh after the client completes a dossier or account-stats cache sync. This also covers battle results that arrive after returning to the hangar, rather than relying only on the immediate post-return refreshes.
+
 ### Filters
 
 HCC filter IDs:

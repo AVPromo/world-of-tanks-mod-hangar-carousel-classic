@@ -27,6 +27,7 @@ from gui.impl.lobby.hangar.presenters.vehicle_statistics_presenter import Vehicl
 from gui.impl.lobby.hangar.presenters.vehicle_playlists_presenter import VehiclePlaylistsPresenter
 from gui.impl.lobby.tooltips.carousel_vehicle_tooltip import CarouselVehicleTooltipView
 from gui.shared.items_parameters import params_helper as items_params_helper
+from gui.shared.items_cache import CACHE_SYNC_REASON
 from gui.veh_post_progression.models.progression import PostProgressionCompletion
 from gui.veh_post_progression.models.ext_money import ExtendedMoney
 from gui.veh_post_progression.models.progression_step import PostProgressionStepState
@@ -388,6 +389,7 @@ DOSSIER_CACHE_GENERATION = 0
 DOSSIER_FETCH_COUNTER = 0
 MAX_DOSSIER_FETCHES_PER_REFRESH = 256
 COMPATIBILITY_WARNING_SHOWN = False
+ITEMS_CACHE_SYNC_BOUND = False
 
 def _register_callback(delay, callback):
     # BigWorld callbacks are one-shot: once they fire, their id becomes
@@ -474,6 +476,41 @@ def _on_account_become_player(*_args, **_kwargs):
     _schedule_post_battle_refresh()
 
 
+def _on_items_cache_sync_completed(update_reason, *_args, **_kwargs):
+    if update_reason not in (CACHE_SYNC_REASON.DOSSIER_RESYNC, CACHE_SYNC_REASON.STATS_RESYNC):
+        return
+    _refresh_all_models('account statistics sync', invalidate_dossier=True)
+
+
+def _bind_items_cache_sync():
+    global ITEMS_CACHE_SYNC_BOUND
+    if ITEMS_CACHE_SYNC_BOUND:
+        return
+    try:
+        items_cache = SERVICES.itemsCache
+        if items_cache is None or not hasattr(items_cache, 'onSyncCompleted'):
+            LOGGER.warning('Items cache sync event unavailable; card-stat sync refresh is disabled')
+            return
+        items_cache.onSyncCompleted += _on_items_cache_sync_completed
+        ITEMS_CACHE_SYNC_BOUND = True
+    except Exception:
+        LOGGER.exception('Unable to bind card-stat refresh to items cache sync')
+
+
+def _unbind_items_cache_sync():
+    global ITEMS_CACHE_SYNC_BOUND
+    if not ITEMS_CACHE_SYNC_BOUND:
+        return
+    try:
+        items_cache = SERVICES.itemsCache
+        if items_cache is not None and hasattr(items_cache, 'onSyncCompleted'):
+            items_cache.onSyncCompleted -= _on_items_cache_sync_completed
+    except Exception:
+        LOGGER.exception('Unable to unbind card-stat refresh from items cache sync')
+    finally:
+        ITEMS_CACHE_SYNC_BOUND = False
+
+
 def _add_safe_provider(provider_list, provider):
     """Track a provider without finalizing native objects owned by the game."""
     if provider in provider_list:
@@ -522,6 +559,7 @@ def fini():
             g_playerEvents.onAccountBecomePlayer -= _on_account_become_player
     except Exception:
         pass
+    _unbind_items_cache_sync()
     while CALLBACK_IDS:
         callback_id = CALLBACK_IDS.pop()
         try:
@@ -2307,6 +2345,7 @@ def _on_settings_changed(linkage, settings):
                 _patch_vehicle_statistics_presenter()
                 _patch_legacy_playlist_cleanup()
                 _bind_hangar_space_events()
+                _bind_items_cache_sync()
                 g_playerEvents.onAvatarReady += _track_last_played
                 if hasattr(g_playerEvents, 'onAccountBecomePlayer'):
                     g_playerEvents.onAccountBecomePlayer += _on_account_become_player
@@ -2389,6 +2428,7 @@ if CONFIG.get('enabled', True):
         _patch_vehicle_statistics_presenter()
         _patch_legacy_playlist_cleanup()
         _bind_hangar_space_events()
+        _bind_items_cache_sync()
         g_playerEvents.onAvatarReady += _track_last_played
         if hasattr(g_playerEvents, 'onAccountBecomePlayer'):
             g_playerEvents.onAccountBecomePlayer += _on_account_become_player
