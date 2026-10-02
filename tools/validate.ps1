@@ -12,6 +12,7 @@ $zip = [IO.Compression.ZipFile]::OpenRead($PackagePath)
 try {
     $required = @(
         'meta.xml',
+        'res/gui/gen_resources/hangar_carousel_classic.json',
         'res/scripts/client/gui/mods/mod_hangar_carousel_classic.pyc',
         'res/gui/gameface/mods/hcc/hangar_carousel_classic/hangar_carousel_classic.js',
         'res/gui/gameface/mods/hcc/hangar_carousel_classic/hangar_carousel_classic.css',
@@ -27,6 +28,24 @@ try {
         if ($entry -notin $names) {
             throw "Required package entry is missing: $entry"
         }
+    }
+
+    $resource = $zip.GetEntry('res/gui/gen_resources/hangar_carousel_classic.json')
+    $resourceStream = $resource.Open()
+    $resourceReader = New-Object IO.StreamReader($resourceStream, [Text.Encoding]::UTF8)
+    try {
+        $resourceData = @(ConvertFrom-Json -InputObject $resourceReader.ReadToEnd())
+    }
+    finally {
+        $resourceReader.Dispose()
+        $resourceStream.Dispose()
+    }
+    if ($resourceData.Count -ne 1 -or
+        $resourceData[0].type -ne 'Layout' -or
+        $resourceData[0].path -ne 'coui://gui/gameface/mods/hcc/hangar_carousel_classic/hangar_carousel_classic.html' -or
+        $resourceData[0].parameters.entrance -ne 'HangarCarouselClassic' -or
+        $resourceData[0].itemID -ne 'HangarCarouselClassic') {
+        throw 'Gameface layout registration is missing or invalid.'
     }
 
     $pyc = $zip.GetEntry('res/scripts/client/gui/mods/mod_hangar_carousel_classic.pyc')
