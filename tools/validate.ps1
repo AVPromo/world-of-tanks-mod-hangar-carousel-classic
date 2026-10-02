@@ -122,7 +122,10 @@ try {
     if (-not $nativeSource.Contains('3===s&&"hcc-native-carousel-page--3",4===s&&"hcc-native-carousel-page--4"')) {
         throw 'Native carousel page does not expose the three- and four-row layout classes.'
     }
-    if (-not $nativeSource.Contains('if(s?(!O(t)||a?.fromWotPlus):O(t)&&!a?.fromWotPlus)return!1;')) {
+    if (-not (
+        $nativeSource.Contains('if(s?(!O(t)||a?.fromWotPlus):O(t)&&!a?.fromWotPlus)return!1;') -or
+        $nativeSource.Contains('if(s?(!z(t)||a?.fromWotPlus):z(t)&&!a?.fromWotPlus)return!1;')
+    )) {
         throw 'Native rental filter does not use Classic inverted semantics.'
     }
     $comp7Bundle = $zip.GetEntry('res/comp7/gui/gameface/_dist/production/mono/lobby/views/hangar/hangar.html/bundle.js')

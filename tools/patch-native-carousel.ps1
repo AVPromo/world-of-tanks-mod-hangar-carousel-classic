@@ -13,7 +13,8 @@ $packagePath = Join-Path $GameRoot 'res\packages\gui-part3.pkg'
 $entryPath = 'gui/gameface/_dist/production/mono/hangar/views/main/main.html/bundle.js'
 $supportedHashes = @(
     '98D4D4060C141B5728F9126E4B43AD9E0E0BD6BA3FC72E14156391DB54737FBA', # WoT 2.4.0.0
-    '8FF6818718F1DBB5E6954F83B3C64E3CB32B584F771BA7AF5355EF81AC803902'  # WoT 2.4.0.1
+    '8FF6818718F1DBB5E6954F83B3C64E3CB32B584F771BA7AF5355EF81AC803902', # WoT 2.4.0.1
+    'F9A373D36D8B17D4067A1852FD971B7D102C3662F60983B3257ADE152B7D0E9A'  # WoT 2.4.0.2
 )
 
 Add-Type -AssemblyName System.IO.Compression
@@ -57,8 +58,8 @@ $replacements = @(
         'r={...t.primitives(["defaultFilters","hccCarouselAuto","hccSortJson"])},'
     ),
     @(
-        'if(!s&&O(t)&&!a?.fromWotPlus)return!1;',
-        'if(s?(!O(t)||a?.fromWotPlus):O(t)&&!a?.fromWotPlus)return!1;'
+        'if(!s&&z(t)&&!a?.fromWotPlus)return!1;',
+        'if(s?(!z(t)||a?.fromWotPlus):z(t)&&!a?.fromWotPlus)return!1;'
     ),
     @(
         'l={...t.primitives(["carouselRowCount"]),filters:e.box(i,{deep:!1}),searchName:e.box(n?.[0]??""),nations:t.arrayClone("nationsOrder")};',

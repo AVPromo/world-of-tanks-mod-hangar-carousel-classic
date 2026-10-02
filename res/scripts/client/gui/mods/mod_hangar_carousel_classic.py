@@ -390,6 +390,7 @@ DOSSIER_FETCH_COUNTER = 0
 MAX_DOSSIER_FETCHES_PER_REFRESH = 256
 COMPATIBILITY_WARNING_SHOWN = False
 ITEMS_CACHE_SYNC_BOUND = False
+DOSSIER_RESYNC_BOUND = False
 
 def _register_callback(delay, callback):
     # BigWorld callbacks are one-shot: once they fire, their id becomes
@@ -463,17 +464,43 @@ def _refresh_all_models(reason='unknown', invalidate_dossier=False):
         LOGGER.exception('Unable to run global HCC refresh (%s)', reason)
 
 
-def _schedule_post_battle_refresh():
-    # Staggered refresh: immediate + delayed passes to catch late dossier updates.
-    def refresh_after_battle():
-        _refresh_all_models('post battle refresh', invalidate_dossier=True)
+def _schedule_dossier_refresh(reason):
+    def refresh_dossiers():
+        _refresh_all_models(reason, invalidate_dossier=True)
     for delay in (0.2, 1.5, 4.0):
-        _register_callback(delay, refresh_after_battle)
+        _register_callback(delay, refresh_dossiers)
 
 
 def _on_account_become_player(*_args, **_kwargs):
-    # Fires when entering the hangar account context (e.g. after battle end).
-    _schedule_post_battle_refresh()
+    # Refresh after the player account enters the lobby.
+    _schedule_dossier_refresh('account became player')
+
+
+def _on_dossiers_resync(*_args, **_kwargs):
+    _schedule_dossier_refresh('vehicle dossiers resynchronized')
+
+
+def _bind_dossiers_resync():
+    global DOSSIER_RESYNC_BOUND
+    if DOSSIER_RESYNC_BOUND:
+        return
+    try:
+        g_playerEvents.onDossiersResync += _on_dossiers_resync
+        DOSSIER_RESYNC_BOUND = True
+    except Exception:
+        LOGGER.exception('Unable to bind card-stat refresh to vehicle dossier resync')
+
+
+def _unbind_dossiers_resync():
+    global DOSSIER_RESYNC_BOUND
+    if not DOSSIER_RESYNC_BOUND:
+        return
+    try:
+        g_playerEvents.onDossiersResync -= _on_dossiers_resync
+    except Exception:
+        LOGGER.exception('Unable to unbind card-stat refresh from vehicle dossier resync')
+    finally:
+        DOSSIER_RESYNC_BOUND = False
 
 
 def _on_items_cache_sync_completed(update_reason, *_args, **_kwargs):
@@ -559,6 +586,7 @@ def fini():
             g_playerEvents.onAccountBecomePlayer -= _on_account_become_player
     except Exception:
         pass
+    _unbind_dossiers_resync()
     _unbind_items_cache_sync()
     while CALLBACK_IDS:
         callback_id = CALLBACK_IDS.pop()
@@ -1043,6 +1071,8 @@ def _build_stats(vehicle, account_random_stats, vehicle_cuts):
     global DOSSIER_FETCH_COUNTER
     battles = 0
     wins = 0
+    dossier_battles = None
+    dossier_win_rate = None
     mastery = 0
     if vehicle.intCD <= 0:
         LOGGER.debug('Invalid intCD for vehicle: %s', vehicle.intCD)
@@ -1087,14 +1117,24 @@ def _build_stats(vehicle, account_random_stats, vehicle_cuts):
         except Exception:
             LOGGER.debug('RandomStats extraction failed for vehicle %d', vehicle.intCD)
             raise
+        try:
+            dossier_battles = random_stats.getBattlesCount()
+            dossier_win_rate = random_stats.getWinsEfficiency()
+        except Exception:
+            LOGGER.debug('Dossier battle stats unavailable for vehicle %d', vehicle.intCD)
         average_damage = int(random_stats.getAvgDamage() or 0)
         marks_on_gun = _marks_on_gun_rating(vehicle_dossier)
         marks_on_gun_level = _marks_on_gun_level(vehicle_dossier)
     except Exception:
         LOGGER.debug('Dossier stats unavailable for vehicle %d; using defaults', vehicle.intCD)
 
+    if dossier_battles is not None:
+        battles = dossier_battles
+    win_rate = round(100.0 * wins / battles, 1) if battles else 0.0
+    if dossier_win_rate is not None:
+        win_rate = round(100.0 * float(dossier_win_rate or 0.0), 1)
     return {'battles': int(battles),
-     'winRate': round(100.0 * wins / battles, 1) if battles else 0.0,
+     'winRate': win_rate,
      'averageDamage': average_damage,
      'alphaDamage': alpha_damage,
      'mastery': int(mastery),
@@ -2346,6 +2386,7 @@ def _on_settings_changed(linkage, settings):
                 _patch_legacy_playlist_cleanup()
                 _bind_hangar_space_events()
                 _bind_items_cache_sync()
+                _bind_dossiers_resync()
                 g_playerEvents.onAvatarReady += _track_last_played
                 if hasattr(g_playerEvents, 'onAccountBecomePlayer'):
                     g_playerEvents.onAccountBecomePlayer += _on_account_become_player
@@ -2429,6 +2470,7 @@ if CONFIG.get('enabled', True):
         _patch_legacy_playlist_cleanup()
         _bind_hangar_space_events()
         _bind_items_cache_sync()
+        _bind_dossiers_resync()
         g_playerEvents.onAvatarReady += _track_last_played
         if hasattr(g_playerEvents, 'onAccountBecomePlayer'):
             g_playerEvents.onAccountBecomePlayer += _on_account_become_player

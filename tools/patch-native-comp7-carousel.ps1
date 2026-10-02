@@ -12,7 +12,8 @@ $OutputPath = [IO.Path]::GetFullPath($OutputPath)
 $packagePath = Join-Path $GameRoot 'res\packages\comp7.pkg'
 $entryPath = 'comp7/gui/gameface/_dist/production/mono/lobby/views/hangar/hangar.html/bundle.js'
 $supportedHashes = @(
-    '2067FD7C155BC180E12DAF1825DB5E1BCAEBFA094D660E167D33B2FB24FEB6DA' # WoT 2.4.0.1
+    '2067FD7C155BC180E12DAF1825DB5E1BCAEBFA094D660E167D33B2FB24FEB6DA', # WoT 2.4.0.1
+    'B296E8E6C4DABA266C3C6AC2AA72F91A340C63B4A210B9453A338E04B6E456C4'  # WoT 2.4.0.2
 )
 
 Add-Type -AssemblyName System.IO.Compression

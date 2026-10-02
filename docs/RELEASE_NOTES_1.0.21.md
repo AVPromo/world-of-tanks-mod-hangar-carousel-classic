@@ -1,0 +1,2 @@
+- Add verified native hangar bundle hashes for World of Tanks 2.4.0.2.
+- Update the classic carousel rental-filter patch and validation for the 2.4.0.2 bundle.
