@@ -87,7 +87,7 @@ $packages = @(Get-ChildItem -LiteralPath $Directory -Filter $Filter -File -Error
 if ($packages.Count -eq 0) {
     return $null
 }
-return $packages | Sort-Object Name -Descending | Select-Object -First 1
+return $packages | Sort-Object { [version]($_.BaseName -replace '^net\.openwg\.gameface_', '') } -Descending | Select-Object -First 1
 }
 
 $dependencies = $null
@@ -102,6 +102,10 @@ foreach ($root in ($dependencyRoots | Select-Object -Unique)) {
 }
 if (-not $dependencies) {
     throw 'No required dependency found. Expected net.openwg.gameface_*.wotmod in the client mods directory or dist\mods.'
+}
+if ([version]$resolvedVersion -ge [version]'2.4.1.0' -and
+    [version]([IO.Path]::GetFileNameWithoutExtension($gameface) -replace '^net\.openwg\.gameface_', '') -lt [version]'1.2.2') {
+    throw 'WoT 2.4.1.0 and later require net.openwg.gameface 1.2.2 or newer in the fullpack. Update the GameFace dependency first.'
 }
 
 $releaseRoot = Join-Path $repo ('build\release-{0}-full' -f $Version)

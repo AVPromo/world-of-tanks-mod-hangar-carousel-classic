@@ -69,20 +69,32 @@ class _ModLoggerAdapter(logging.LoggerAdapter):
 
 LOGGER = _ModLoggerAdapter(logging.getLogger('HangarCarouselClassic'), {})
 NATIVE_RESOURCE_HASHES = (
+    (
         ('res/packages/gui-part3.pkg', 'gui/gameface/_dist/production/mono/hangar/views/main/main.html/bundle.js',
          ('753102BFFDFE1A52B23706606F804CAC236463CB1A827A0EA3449E1D263FC6CE',
-            '21B48CFFF0EDA9247413338CBEF3EDC2DD7BE0D1B6504F67AF05E163A22DF1A6',
-            '21C58DA5788BDDF31655B3510B027505A2418355D299D50773E6F414F28779D0',
-            '98D4D4060C141B5728F9126E4B43AD9E0E0BD6BA3FC72E14156391DB54737FBA',
-            '8FF6818718F1DBB5E6954F83B3C64E3CB32B584F771BA7AF5355EF81AC803902')),
+          '21B48CFFF0EDA9247413338CBEF3EDC2DD7BE0D1B6504F67AF05E163A22DF1A6',
+          '21C58DA5788BDDF31655B3510B027505A2418355D299D50773E6F414F28779D0',
+          '98D4D4060C141B5728F9126E4B43AD9E0E0BD6BA3FC72E14156391DB54737FBA',
+          '8FF6818718F1DBB5E6954F83B3C64E3CB32B584F771BA7AF5355EF81AC803902',
+          'F9A373D36D8B17D4067A1852FD971B7D102C3662F60983B3257ADE152B7D0E9A')),
+        ('res/packages/gui-part2.pkg', 'gui/gameface/_dist/production/mono/hangar/main/bundle.js',
+         ('0F70F90D3ED8154F46BAE0C02D13497C8CC2134035205B2D9FD1DC5EF511DF47',))
+    ),
+    (
         ('res/packages/gui-part4.pkg', 'gui/gameface/_dist/production/mono/hangar/views/vehicle_tooltip/vehicle_tooltip.html/bundle.js',
          ('B1CBC96E18174947F5CC83E46A5511924DA9D7AEF139DFA8CB75AA79B366DA4E',
-            '66AACCC3D55B62EFC6264359F133D51F04270A8E7E737FE1BB2FFB6461ECC1E4',
-         '9E3C202258E9182E2788BAD4B09C3EDA969AB8F5A73A08CAA6A2B7E377C342C5',
-         '50FEDA5422470443F98F2E1B549F04F4E85156DA151BDB953FCEAC61B1DE0AA9')),
+          '66AACCC3D55B62EFC6264359F133D51F04270A8E7E737FE1BB2FFB6461ECC1E4',
+          '9E3C202258E9182E2788BAD4B09C3EDA969AB8F5A73A08CAA6A2B7E377C342C5',
+          '50FEDA5422470443F98F2E1B549F04F4E85156DA151BDB953FCEAC61B1DE0AA9',
+          '2ED1410D4FE2E3EA65D91800EF2C9EAE99CFA61DC66F2C8BB5E7DC419B09E280')),
+        ('res/packages/gui-part1.pkg', 'gui/gameface/_dist/production/mono/hangar/vehicle_tooltip/bundle.js',
+         ('53726CCCEC189A582835F16381DA5A47529A899EFAE96A562350085CF3649AE9',))
+    ),
+    (
         ('res/packages/gui-part2.pkg', 'gui/gameface/_dist/production/mono/hangar/vehicle_tooltip/vehicle_tooltip.css',
          ('4D9D45F739F642F5CCD443386722045F319EC873352B159B36BAEA210249D822',
-            'FED446477AD05AFC9556AC3FD92DF45573E8F9121466A562105BAAF695C61726'))
+          'FED446477AD05AFC9556AC3FD92DF45573E8F9121466A562105BAAF695C61726'))
+    )
 )
 DEFAULT_CONFIG = {'schemaVersion': 5,
  'enabled': True,
@@ -419,15 +431,27 @@ def _check_native_client_compatibility():
         return
     try:
         game_root = os.getcwd()
-        for package_rel_path, entry_path, supported_hashes in NATIVE_RESOURCE_HASHES:
-            package_path = os.path.join(game_root, package_rel_path)
-            if not os.path.isfile(package_path):
+        for resource_candidates in NATIVE_RESOURCE_HASHES:
+            source = None
+            supported_hashes = ()
+            for package_rel_path, entry_path, candidate_hashes in resource_candidates:
+                package_path = os.path.join(game_root, package_rel_path)
+                if not os.path.isfile(package_path):
+                    continue
+                archive = zipfile.ZipFile(package_path, 'r')
+                try:
+                    try:
+                        source = archive.read(entry_path)
+                    except KeyError:
+                        source = None
+                finally:
+                    archive.close()
+                if source is None:
+                    continue
+                supported_hashes = candidate_hashes
+                break
+            if source is None:
                 return
-            archive = zipfile.ZipFile(package_path, 'r')
-            try:
-                source = archive.read(entry_path)
-            finally:
-                archive.close()
             if hashlib.sha256(source).hexdigest().upper() not in supported_hashes:
                 COMPATIBILITY_WARNING_SHOWN = True
                 from gui import SystemMessages

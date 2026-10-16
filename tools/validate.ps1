@@ -10,6 +10,34 @@ Add-Type -AssemblyName System.IO.Compression
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 $zip = [IO.Compression.ZipFile]::OpenRead($PackagePath)
 try {
+    $names = @($zip.Entries | ForEach-Object FullName)
+    $nativeBundlePath = if ($names -contains 'res/gui/gameface/_dist/production/mono/hangar/main/bundle.js') {
+        'res/gui/gameface/_dist/production/mono/hangar/main/bundle.js'
+    }
+    elseif ($names -contains 'res/gui/gameface/_dist/production/mono/hangar/views/main/main.html/bundle.js') {
+        'res/gui/gameface/_dist/production/mono/hangar/views/main/main.html/bundle.js'
+    }
+    else {
+        throw 'Native hangar bundle is missing from the package.'
+    }
+    $comp7BundlePath = if ($names -contains 'res/comp7/gui/gameface/_dist/production/mono/lobby/hangar/bundle.js') {
+        'res/comp7/gui/gameface/_dist/production/mono/lobby/hangar/bundle.js'
+    }
+    elseif ($names -contains 'res/comp7/gui/gameface/_dist/production/mono/lobby/views/hangar/hangar.html/bundle.js') {
+        'res/comp7/gui/gameface/_dist/production/mono/lobby/views/hangar/hangar.html/bundle.js'
+    }
+    else {
+        throw 'Comp7 hangar bundle is missing from the package.'
+    }
+    $tooltipBundlePath = if ($names -contains 'res/gui/gameface/_dist/production/mono/hangar/vehicle_tooltip/bundle.js') {
+        'res/gui/gameface/_dist/production/mono/hangar/vehicle_tooltip/bundle.js'
+    }
+    elseif ($names -contains 'res/gui/gameface/_dist/production/mono/hangar/views/vehicle_tooltip/vehicle_tooltip.html/bundle.js') {
+        'res/gui/gameface/_dist/production/mono/hangar/views/vehicle_tooltip/vehicle_tooltip.html/bundle.js'
+    }
+    else {
+        throw 'Native vehicle tooltip bundle is missing from the package.'
+    }
     $required = @(
         'meta.xml',
         'res/gui/gen_resources/hangar_carousel_classic.json',
@@ -18,12 +46,11 @@ try {
         'res/gui/gameface/mods/hcc/hangar_carousel_classic/hangar_carousel_classic.css',
         'res/gui/gameface/mods/hcc/hangar_carousel_classic/hangar_carousel_classic.tooltip.js',
         'res/gui/gameface/mods/hcc/hangar_carousel_classic/hangar_carousel_classic.tooltip.css',
-        'res/gui/gameface/_dist/production/mono/hangar/views/main/main.html/bundle.js',
-        'res/comp7/gui/gameface/_dist/production/mono/lobby/views/hangar/hangar.html/bundle.js',
-        'res/gui/gameface/_dist/production/mono/hangar/views/vehicle_tooltip/vehicle_tooltip.html/bundle.js',
+        $nativeBundlePath,
+        $comp7BundlePath,
+        $tooltipBundlePath,
         'res/gui/gameface/_dist/production/mono/hangar/vehicle_tooltip/vehicle_tooltip.css'
     )
-    $names = @($zip.Entries | ForEach-Object FullName)
     foreach ($entry in $required) {
         if ($entry -notin $names) {
             throw "Required package entry is missing: $entry"
@@ -99,7 +126,7 @@ try {
         throw 'Currency protection must not be included in this classic carousel mod.'
     }
 
-    $nativeBundle = $zip.GetEntry('res/gui/gameface/_dist/production/mono/hangar/views/main/main.html/bundle.js')
+    $nativeBundle = $zip.GetEntry($nativeBundlePath)
     $nativeStream = $nativeBundle.Open()
     $nativeReader = New-Object IO.StreamReader($nativeStream, [Text.Encoding]::UTF8)
     try {
@@ -111,16 +138,19 @@ try {
     }
     if (-not (
             $nativeSource.Contains('t+=v)e.push(j.slice(t,t+v))') -or
-            $nativeSource.Contains('t+=i)e.push(j.slice(t,t+i))')
+            $nativeSource.Contains('t+=i)e.push(j.slice(t,t+i))') -or
+            $nativeSource.Contains('a+=_)t.push(e.slice(a,a+_))')
         )) {
         throw 'Native carousel bundle does not contain the generic row chunker.'
     }
-    if ($nativeSource.Contains('totalElements:2===v?N.length:w.length')) {
+    if ($nativeSource.Contains('totalElements:2===v?N.length:w.length') -or
+        $nativeSource.Contains('totalElements:2===_?b.length:v.length')) {
         throw 'Native carousel bundle still contains the two-row-only renderer.'
     }
     if (-not (
             $nativeSource.Contains('3===s&&"hcc-native-carousel--3",4===s&&"hcc-native-carousel--4"') -or
-            $nativeSource.Contains('3===v&&"hcc-native-carousel--3",4===v&&"hcc-native-carousel--4"')
+            $nativeSource.Contains('3===v&&"hcc-native-carousel--3",4===v&&"hcc-native-carousel--4"') -or
+            $nativeSource.Contains('3===_&&"hcc-native-carousel--3",4===_&&"hcc-native-carousel--4"')
         )) {
         throw 'Native carousel bundle does not expose the three- and four-row height classes.'
     }
@@ -132,10 +162,16 @@ try {
         )) {
         throw 'Native carousel bundle does not contain Classic sorting support.'
     }
-    if (-not $nativeSource.Contains('hccCarouselAuto.get()?(u.length<=8?1:u.length<=16?2:u.length<=24?3:4)')) {
+    if (-not (
+            $nativeSource.Contains('hccCarouselAuto.get()?(u.length<=8?1:u.length<=16?2:u.length<=24?3:4)') -or
+            $nativeSource.Contains('hccCarouselAuto.get()?(l.length<=8?1:l.length<=16?2:l.length<=24?3:4)')
+        )) {
         throw 'Native carousel bundle does not calculate automatic rows from the final vehicle list.'
     }
-    if (-not $nativeSource.Contains('hccCarouselAuto.get()?(ir().model.current.amount()<=8?1:ir().model.current.amount()<=16?2:ir().model.current.amount()<=24?3:4)')) {
+    if (-not (
+            $nativeSource.Contains('hccCarouselAuto.get()?(ir().model.current.amount()<=8?1:ir().model.current.amount()<=16?2:ir().model.current.amount()<=24?3:4)') -or
+            $nativeSource.Contains('hccCarouselAuto.get()?(l.length<=8?1:l.length<=16?2:l.length<=24?3:4)')
+        )) {
         throw 'Native carousel page does not calculate automatic height from the final vehicle list.'
     }
     if (-not $nativeSource.Contains('3===s&&"hcc-native-carousel-page--3",4===s&&"hcc-native-carousel-page--4"')) {
@@ -143,11 +179,12 @@ try {
     }
     if (-not (
         $nativeSource.Contains('if(s?(!O(t)||a?.fromWotPlus):O(t)&&!a?.fromWotPlus)return!1;') -or
-        $nativeSource.Contains('if(s?(!z(t)||a?.fromWotPlus):z(t)&&!a?.fromWotPlus)return!1;')
+        $nativeSource.Contains('if(s?(!z(t)||a?.fromWotPlus):z(t)&&!a?.fromWotPlus)return!1;') -or
+        $nativeSource.Contains('if(s?(!P(t)||a?.fromWotPlus):P(t)&&!a?.fromWotPlus)return!1;')
     )) {
         throw 'Native rental filter does not use Classic inverted semantics.'
     }
-    $comp7Bundle = $zip.GetEntry('res/comp7/gui/gameface/_dist/production/mono/lobby/views/hangar/hangar.html/bundle.js')
+    $comp7Bundle = $zip.GetEntry($comp7BundlePath)
     $comp7Stream = $comp7Bundle.Open()
     $comp7Reader = New-Object IO.StreamReader($comp7Stream, [Text.Encoding]::UTF8)
     try {
@@ -157,18 +194,25 @@ try {
         $comp7Reader.Dispose()
         $comp7Stream.Dispose()
     }
-    if (-not $comp7Source.Contains('t+=b)e.push(N.slice(t,t+b))') -or
-        $comp7Source.Contains('for(let t=0;t<N.length;t+=2)e.push(N.slice(t,t+2))')) {
+    if (-not (
+            $comp7Source.Contains('t+=b)e.push(N.slice(t,t+b))') -or
+            $comp7Source.Contains('a+=_)t.push(e.slice(a,a+_))') -or
+            $comp7Source.Contains('for(let t=0;t<N.length;t+=2)e.push(N.slice(t,t+2))')
+        )) {
         throw 'Comp7 carousel bundle does not contain the configured row chunker.'
     }
-    if (-not $comp7Source.Contains('totalElements:1<b?w.length:C.length') -or
-        -not $comp7Source.Contains('return 1<b?')) {
+    if (-not (
+            ($comp7Source.Contains('totalElements:1<b?w.length:C.length') -and
+             $comp7Source.Contains('return 1<b?')) -or
+            ($comp7Source.Contains('totalElements:1<_?v.length:b.length') -and
+             $comp7Source.Contains('return 1<_?'))
+        )) {
         throw 'Comp7 carousel bundle does not render more than two rows.'
     }
     if (-not $comp7Source.Contains('3===s&&"hcc-native-carousel-page--3",4===s&&"hcc-native-carousel-page--4"')) {
         throw 'Comp7 carousel page does not expose three- and four-row layout classes.'
     }
-    $tooltipBundle = $zip.GetEntry('res/gui/gameface/_dist/production/mono/hangar/views/vehicle_tooltip/vehicle_tooltip.html/bundle.js')
+    $tooltipBundle = $zip.GetEntry($tooltipBundlePath)
     $tooltipStream = $tooltipBundle.Open()
     $tooltipReader = New-Object IO.StreamReader($tooltipStream, [Text.Encoding]::UTF8)
     try {

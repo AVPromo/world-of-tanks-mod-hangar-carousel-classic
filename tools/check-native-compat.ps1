@@ -8,12 +8,8 @@ param(
     [string]$RepoRoot = ''
 )
 
-# Diagnostic-only tool: checks whether the native WoT bundles referenced by
-# a mod's patch-native-carousel.ps1 / patch-native-tooltip.ps1 still match a
-# known, supported hash, and whether every hardcoded patch pattern still
-# occurs exactly once in the current bundle source. It NEVER writes to the
-# hash lists or the bundles themselves - any required changes must be
-# reviewed and applied by hand in the patch scripts.
+# Diagnostic-only tool: runs the native bundle patchers against the selected
+# client, writing only to uniquely named temporary output files.
 #
 # Usage:
 #   .\check-native-compat.ps1                                   # checks this repo (mini_rework)
@@ -24,6 +20,7 @@ $ErrorActionPreference = 'Stop'
 $repo = if ($RepoRoot) { [IO.Path]::GetFullPath($RepoRoot) } else { [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..')) }
 $toolsDir = Join-Path $repo 'tools'
 $carouselScriptPath = Join-Path $toolsDir 'patch-native-carousel.ps1'
+$comp7ScriptPath = Join-Path $toolsDir 'patch-native-comp7-carousel.ps1'
 $tooltipScriptPath = Join-Path $toolsDir 'patch-native-tooltip.ps1'
 
 if (-not (Test-Path -LiteralPath $carouselScriptPath)) {
@@ -31,6 +28,9 @@ if (-not (Test-Path -LiteralPath $carouselScriptPath)) {
 }
 if (-not (Test-Path -LiteralPath $tooltipScriptPath)) {
     throw "patch-native-tooltip.ps1 not found under $toolsDir - is -RepoRoot pointing at a mod repo with the same tools layout?"
+}
+if (-not (Test-Path -LiteralPath $comp7ScriptPath)) {
+    throw "patch-native-comp7-carousel.ps1 not found under $toolsDir."
 }
 
 Write-Output "Checked repo: $repo"
@@ -145,77 +145,38 @@ $GameRoot = Resolve-GameRoot -PreferredRoot $GameRoot
 Write-Output "Game root: $GameRoot"
 Write-Output ''
 
-$overallOk = $true
+$tempBase = Join-Path $env:TEMP ('hcc-native-compat-' + [guid]::NewGuid().ToString('N'))
+$mainOutput = $tempBase + '-main.js'
+$comp7Output = $tempBase + '-comp7.js'
+$tooltipOutput = $tempBase + '-tooltip.js'
+$tooltipCssOutput = $tempBase + '-tooltip.css'
+$checkFailed = $false
 
-# --- Carousel bundle -------------------------------------------------------
-Write-Output '== Native carousel bundle (gui-part3.pkg) =='
-$carouselSupportedHashes = Get-ScriptVariableValues -Path $carouselScriptPath -VariableName 'supportedHashes'
-$carouselReplacements = Get-ScriptVariableValues -Path $carouselScriptPath -VariableName 'replacements'
-
-$carouselBytes = Read-PackageEntryBytes `
-    -PackagePath (Join-Path $GameRoot 'res\packages\gui-part3.pkg') `
-    -EntryPath 'gui/gameface/_dist/production/mono/hangar/views/main/main.html/bundle.js'
-$carouselHash = Get-BytesHash $carouselBytes
-$carouselHashKnown = $carouselHash -in $carouselSupportedHashes
-Write-Output "Hash: $carouselHash"
-if ($carouselHashKnown) {
-    Write-Output 'Hash status: KNOWN (matches an existing supported hash entry)'
+try {
+    Write-Output '== Native main carousel =='
+    & $carouselScriptPath -GameRoot $GameRoot -OutputPath $mainOutput
+    Write-Output '== Comp7 carousel =='
+    & $comp7ScriptPath -GameRoot $GameRoot -OutputPath $comp7Output
+    Write-Output '== Vehicle tooltip bundle and stylesheet =='
+    & $tooltipScriptPath `
+        -GameRoot $GameRoot `
+        -BundleOutputPath $tooltipOutput `
+        -CssOutputPath $tooltipCssOutput `
+        -ScriptPath (Join-Path $repo 'res\gui\gameface\mods\hcc\hangar_carousel_classic\hangar_carousel_classic.tooltip.js') `
+        -StylePath (Join-Path $repo 'res\gui\gameface\mods\hcc\hangar_carousel_classic\hangar_carousel_classic.tooltip.css')
+    Write-Output 'RESULT: Current client hashes and all required patch anchors are supported.'
 }
-else {
-    $overallOk = $false
-    Write-Output 'Hash status: UNKNOWN (client bundle changed - patterns below still checked for reference)'
+catch {
+    Write-Output "RESULT: Current client is not compatible: $($_.Exception.Message)"
+    $checkFailed = $true
 }
-Write-Output ''
-
-$carouselSource = [Text.Encoding]::UTF8.GetString($carouselBytes)
-$patternIndex = 0
-foreach ($replacement in $carouselReplacements) {
-    $patternIndex++
-    $from = $replacement[0]
-    $count = ([regex]::Matches($carouselSource, [regex]::Escape($from))).Count
-    $status = switch ($count) {
-        1 { 'OK' }
-        0 { 'MISSING'; $overallOk = $false }
-        default { 'AMBIGUOUS'; $overallOk = $false }
+finally {
+    foreach ($path in @($mainOutput, $comp7Output, $tooltipOutput, $tooltipCssOutput)) {
+        if (Test-Path -LiteralPath $path -PathType Leaf) {
+            Remove-Item -LiteralPath $path -Force
+        }
     }
-    $preview = if ($from.Length -gt 70) { $from.Substring(0, 70) + '...' } else { $from }
-    Write-Output ("[{0}] pattern #{1,2}: {2} matches - {3}" -f $status, $patternIndex, $count, $preview)
-}
-Write-Output ''
-
-# --- Tooltip bundle + css ---------------------------------------------------
-Write-Output '== Native tooltip bundle (gui-part4.pkg) / stylesheet (gui-part2.pkg) =='
-$tooltipSupportedBundleHashes = Get-ScriptVariableValues -Path $tooltipScriptPath -VariableName 'supportedBundleHashes'
-$tooltipSupportedCssHashes = Get-ScriptVariableValues -Path $tooltipScriptPath -VariableName 'supportedCssHashes'
-
-$tooltipBundleBytes = Read-PackageEntryBytes `
-    -PackagePath (Join-Path $GameRoot 'res\packages\gui-part4.pkg') `
-    -EntryPath 'gui/gameface/_dist/production/mono/hangar/views/vehicle_tooltip/vehicle_tooltip.html/bundle.js'
-$tooltipCssBytes = Read-PackageEntryBytes `
-    -PackagePath (Join-Path $GameRoot 'res\packages\gui-part2.pkg') `
-    -EntryPath 'gui/gameface/_dist/production/mono/hangar/vehicle_tooltip/vehicle_tooltip.css'
-
-$tooltipBundleHash = Get-BytesHash $tooltipBundleBytes
-$tooltipCssHash = Get-BytesHash $tooltipCssBytes
-$tooltipBundleKnown = $tooltipBundleHash -in $tooltipSupportedBundleHashes
-$tooltipCssKnown = $tooltipCssHash -in $tooltipSupportedCssHashes
-
-Write-Output "Bundle hash: $tooltipBundleHash -> $(if ($tooltipBundleKnown) { 'KNOWN' } else { 'UNKNOWN' })"
-Write-Output "CSS hash:    $tooltipCssHash -> $(if ($tooltipCssKnown) { 'KNOWN' } else { 'UNKNOWN' })"
-if (-not $tooltipBundleKnown -or -not $tooltipCssKnown) {
-    $overallOk = $false
-    Write-Output 'Note: the tooltip patch only appends the mod renderer; no string patterns to verify, but the hash gate in patch-native-tooltip.ps1 must be extended with the new hash(es) after a manual review confirms nothing else changed structurally.'
-}
-Write-Output ''
-
-# --- Summary -----------------------------------------------------------------
-if ($overallOk) {
-    Write-Output 'RESULT: All hashes and patch patterns are consistent with the current game client. No action needed.'
-    exit 0
-}
-else {
-    Write-Output 'RESULT: Action needed before building against this client version.'
-    Write-Output ' - For UNKNOWN hashes: manually review the new bundle, then add the new hash to the relevant $supportedHashes/$supportedBundleHashes/$supportedCssHashes list.'
-    Write-Output ' - For MISSING/AMBIGUOUS patterns: the client bundle text changed around that patch point; update the corresponding "from"/"to" pair in patch-native-carousel.ps1 by hand.'
-    exit 1
+    if ($checkFailed) {
+        exit 1
+    }
 }

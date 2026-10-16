@@ -16,15 +16,26 @@ $ErrorActionPreference = 'Stop'
 $GameRoot = [IO.Path]::GetFullPath($GameRoot)
 $BundleOutputPath = [IO.Path]::GetFullPath($BundleOutputPath)
 $CssOutputPath = [IO.Path]::GetFullPath($CssOutputPath)
-$bundlePackagePath = Join-Path $GameRoot 'res\packages\gui-part4.pkg'
-$cssPackagePath = Join-Path $GameRoot 'res\packages\gui-part2.pkg'
-$bundleEntryPath = 'gui/gameface/_dist/production/mono/hangar/views/vehicle_tooltip/vehicle_tooltip.html/bundle.js'
-$cssEntryPath = 'gui/gameface/_dist/production/mono/hangar/vehicle_tooltip/vehicle_tooltip.css'
-$supportedBundleHashes = @(
-    '9E3C202258E9182E2788BAD4B09C3EDA969AB8F5A73A08CAA6A2B7E377C342C5', # WoT 2.4.0.0
-    '50FEDA5422470443F98F2E1B549F04F4E85156DA151BDB953FCEAC61B1DE0AA9', # WoT 2.4.0.1
-    '2ED1410D4FE2E3EA65D91800EF2C9EAE99CFA61DC66F2C8BB5E7DC419B09E280'  # WoT 2.4.0.2
+$bundleProfiles = @(
+    @{
+        Name = '2.4.1.0'
+        PackagePath = Join-Path $GameRoot 'res\packages\gui-part1.pkg'
+        EntryPath = 'gui/gameface/_dist/production/mono/hangar/vehicle_tooltip/bundle.js'
+        SupportedHashes = @('53726CCCEC189A582835F16381DA5A47529A899EFAE96A562350085CF3649AE9')
+    },
+    @{
+        Name = '2.4.0.x'
+        PackagePath = Join-Path $GameRoot 'res\packages\gui-part4.pkg'
+        EntryPath = 'gui/gameface/_dist/production/mono/hangar/views/vehicle_tooltip/vehicle_tooltip.html/bundle.js'
+        SupportedHashes = @(
+            '9E3C202258E9182E2788BAD4B09C3EDA969AB8F5A73A08CAA6A2B7E377C342C5',
+            '50FEDA5422470443F98F2E1B549F04F4E85156DA151BDB953FCEAC61B1DE0AA9',
+            '2ED1410D4FE2E3EA65D91800EF2C9EAE99CFA61DC66F2C8BB5E7DC419B09E280'
+        )
+    }
 )
+$cssPackagePath = Join-Path $GameRoot 'res\packages\gui-part2.pkg'
+$cssEntryPath = 'gui/gameface/_dist/production/mono/hangar/vehicle_tooltip/vehicle_tooltip.css'
 $supportedCssHashes = @(
     'FED446477AD05AFC9556AC3FD92DF45573E8F9121466A562105BAAF695C61726'  # WoT 2.4.0.0
 )
@@ -65,12 +76,43 @@ function Get-BytesHash([byte[]]$bytes) {
     }
 }
 
-$bundleBytes = Read-ZipEntryBytes $bundlePackagePath $bundleEntryPath
+$bundleProfile = $null
+$bundleBytes = $null
+foreach ($candidate in $bundleProfiles) {
+    if (-not (Test-Path -LiteralPath $candidate.PackagePath)) {
+        continue
+    }
+    $zip = [IO.Compression.ZipFile]::OpenRead($candidate.PackagePath)
+    try {
+        $entry = $zip.GetEntry($candidate.EntryPath)
+        if (-not $entry) {
+            continue
+        }
+        $stream = $entry.Open()
+        $memory = New-Object IO.MemoryStream
+        try {
+            $stream.CopyTo($memory)
+            $bundleBytes = $memory.ToArray()
+        }
+        finally {
+            $memory.Dispose()
+            $stream.Dispose()
+        }
+    }
+    finally {
+        $zip.Dispose()
+    }
+    $bundleProfile = $candidate
+    break
+}
+if (-not $bundleProfile) {
+    throw 'Native tooltip bundle is missing from both the 2.4.1.0 and 2.4.0.x client package layouts.'
+}
 $cssBytes = Read-ZipEntryBytes $cssPackagePath $cssEntryPath
 $bundleHash = Get-BytesHash $bundleBytes
 $cssHash = Get-BytesHash $cssBytes
-if ($bundleHash -notin $supportedBundleHashes) {
-    throw "Unsupported native tooltip bundle $bundleHash; supported hashes: $($supportedBundleHashes -join ', ')"
+if ($bundleHash -notin $bundleProfile.SupportedHashes) {
+    throw "Unsupported native tooltip bundle $bundleHash for client layout $($bundleProfile.Name); supported hashes: $($bundleProfile.SupportedHashes -join ', ')"
 }
 if ($cssHash -notin $supportedCssHashes) {
     throw "Unsupported native tooltip stylesheet $cssHash; supported hashes: $($supportedCssHashes -join ', ')"

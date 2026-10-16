@@ -9,35 +9,58 @@ param(
 $ErrorActionPreference = 'Stop'
 $GameRoot = [IO.Path]::GetFullPath($GameRoot)
 $OutputPath = [IO.Path]::GetFullPath($OutputPath)
-$packagePath = Join-Path $GameRoot 'res\packages\gui-part3.pkg'
-$entryPath = 'gui/gameface/_dist/production/mono/hangar/views/main/main.html/bundle.js'
-$supportedHashes = @(
-    '98D4D4060C141B5728F9126E4B43AD9E0E0BD6BA3FC72E14156391DB54737FBA', # WoT 2.4.0.0
-    '8FF6818718F1DBB5E6954F83B3C64E3CB32B584F771BA7AF5355EF81AC803902', # WoT 2.4.0.1
-    'F9A373D36D8B17D4067A1852FD971B7D102C3662F60983B3257ADE152B7D0E9A'  # WoT 2.4.0.2
+$profiles = @(
+    @{
+        Name = '2.4.1.0'
+        PackagePath = Join-Path $GameRoot 'res\packages\gui-part2.pkg'
+        EntryPath = 'gui/gameface/_dist/production/mono/hangar/main/bundle.js'
+        SupportedHashes = @('0F70F90D3ED8154F46BAE0C02D13497C8CC2134035205B2D9FD1DC5EF511DF47')
+    },
+    @{
+        Name = '2.4.0.x'
+        PackagePath = Join-Path $GameRoot 'res\packages\gui-part3.pkg'
+        EntryPath = 'gui/gameface/_dist/production/mono/hangar/views/main/main.html/bundle.js'
+        SupportedHashes = @(
+            '98D4D4060C141B5728F9126E4B43AD9E0E0BD6BA3FC72E14156391DB54737FBA',
+            '8FF6818718F1DBB5E6954F83B3C64E3CB32B584F771BA7AF5355EF81AC803902',
+            'F9A373D36D8B17D4067A1852FD971B7D102C3662F60983B3257ADE152B7D0E9A'
+        )
+    }
 )
 
 Add-Type -AssemblyName System.IO.Compression
 Add-Type -AssemblyName System.IO.Compression.FileSystem
-$zip = [IO.Compression.ZipFile]::OpenRead($packagePath)
-try {
-    $entry = $zip.GetEntry($entryPath)
-    if (-not $entry) {
-        throw "Native hangar bundle is missing: $entryPath"
+$profile = $null
+$sourceBytes = $null
+foreach ($candidate in $profiles) {
+    if (-not (Test-Path -LiteralPath $candidate.PackagePath)) {
+        continue
     }
-    $stream = $entry.Open()
-    $memory = New-Object IO.MemoryStream
+    $zip = [IO.Compression.ZipFile]::OpenRead($candidate.PackagePath)
     try {
-        $stream.CopyTo($memory)
-        $sourceBytes = $memory.ToArray()
+        $entry = $zip.GetEntry($candidate.EntryPath)
+        if (-not $entry) {
+            continue
+        }
+        $stream = $entry.Open()
+        $memory = New-Object IO.MemoryStream
+        try {
+            $stream.CopyTo($memory)
+            $sourceBytes = $memory.ToArray()
+        }
+        finally {
+            $memory.Dispose()
+            $stream.Dispose()
+        }
     }
     finally {
-        $memory.Dispose()
-        $stream.Dispose()
+        $zip.Dispose()
     }
+    $profile = $candidate
+    break
 }
-finally {
-    $zip.Dispose()
+if (-not $profile) {
+    throw 'Native hangar bundle is missing from both the 2.4.1.0 and 2.4.0.x client package layouts.'
 }
 
 $sha = [Security.Cryptography.SHA256]::Create()
@@ -47,12 +70,85 @@ try {
 finally {
     $sha.Dispose()
 }
-if ($sourceHash -notin $supportedHashes) {
-    throw "Unsupported native hangar bundle $sourceHash; supported hashes: $($supportedHashes -join ', ')"
+if ($sourceHash -notin $profile.SupportedHashes) {
+    throw "Unsupported native hangar bundle $sourceHash for client layout $($profile.Name); supported hashes: $($profile.SupportedHashes -join ', ')"
 }
 
 $source = [Text.Encoding]::UTF8.GetString($sourceBytes)
-$replacements = @(
+if ($profile.Name -eq '2.4.1.0') {
+    $replacements = @(
+        @(
+            'r={...e.primitives(["defaultFilters"])},',
+            'r={...e.primitives(["defaultFilters","hccCarouselAuto","hccSortJson"])},'
+        ),
+        @(
+            'if(!s&&P(t)&&!a?.fromWotPlus)return!1;',
+            'if(s?(!P(t)||a?.fromWotPlus):P(t)&&!a?.fromWotPlus)return!1;'
+        ),
+        @(
+            'o={...e.primitives(["carouselRowCount"]),filters:rn.box(n,{deep:!1}),searchName:rn.box(s?.[0]??""),nations:e.arrayClone("nationsOrder")};',
+            'o={...e.primitives(["carouselRowCount"]),hccCarouselAuto:r.hccCarouselAuto,hccSortJson:r.hccSortJson,filters:rn.box(n,{deep:!1}),searchName:rn.box(s?.[0]??""),nations:e.arrayClone("nationsOrder")};'
+        ),
+        @(
+            'm=os.primitive(()=>{const t=[...c.getAll()],a=e.requires.filters.model.computes.nationToIndex();return t.sort((e,t)=>Mr(a,Ar,e,t)),t});',
+            'm=os.primitive(()=>{const t=[...c.getAll()],nationIndex=e.requires.filters.model.computes.nationToIndex(),hcc=(()=>{try{return JSON.parse(e.requires.filters.model.hccSortJson.get()||"{}")}catch(e){return{}}})(),values=hcc.values||{},allowed=new Set((hcc.allowed||[]).map(e=>String(e)));return hcc.filtered&&t.splice(0,t.length,...t.filter(e=>allowed.has(String(e.id))||allowed.has(String(e.inventoryId)))),t.sort((e,t)=>{const a=values[String(e.id)]||values[e.id]||values[String(e.inventoryId)]||values[e.inventoryId]||[],s=values[String(t.id)]||values[t.id]||values[String(t.inventoryId)]||values[t.inventoryId]||[];for(let e=0;e<Math.max(a.length,s.length);e++){const t=Number(a[e]??0),n=Number(s[e]??0);if(t!==n)return t<n?-1:1}return Mr(nationIndex,Ar,e,t)}),t});'
+        ),
+        @(
+            'i=(n?l(n.list):m()).filter(a=>!1!==r.has(a.id)&&(!!kr(t,a,e.requires.statistic.model.get(a.id))&&Sr(s,a)));st(()=>a.set(i))',
+            'i=(n?l(n.list):m()).filter(a=>!1!==r.has(a.id)&&(!!kr(t,a,e.requires.statistic.model.get(a.id))&&Sr(s,a)));const hcc=(()=>{try{return JSON.parse(e.requires.filters.model.hccSortJson.get()||"{}")}catch(e){return{}}})(),hccValues=hcc.values||{},hccAllowed=new Set((hcc.allowed||[]).map(e=>String(e)));hcc.filtered&&i.splice(0,i.length,...i.filter(e=>hccAllowed.has(String(e.id))||hccAllowed.has(String(e.inventoryId)))),i.sort((e,t)=>{const a=hccValues[String(e.id)]||hccValues[e.id]||hccValues[String(e.inventoryId)]||hccValues[e.inventoryId]||[],s=hccValues[String(t.id)]||hccValues[t.id]||hccValues[String(t.inventoryId)]||hccValues[t.inventoryId]||[],n=Math.max(a.length,s.length);for(let e=0;e<n;e++){const t=Number(a[e]??0),n=Number(s[e]??0);if(t!==n)return t<n?-1:1}return 0}),st(()=>a.set(i))'
+        ),
+        @(
+            'r=Dr().model.carouselRowCount.get(),i=n.model.prebattleModeActive(),o=n.model.telecomRentStatus.get(),l=n.model.current.ids(),',
+            'i=n.model.prebattleModeActive(),o=n.model.telecomRentStatus.get(),l=n.model.current.ids(),r=Dr().model.hccCarouselAuto.get()?(l.length<=8?1:l.length<=16?2:l.length<=24?3:4):Dr().model.carouselRowCount.get(),'
+        ),
+        @(
+            'carouselTypeChange:a.createCallback(e=>({rowCount:e}),"onCarouselTypeChange")',
+            'carouselTypeChange:a.createCallback(e=>"object"==typeof e?e:{rowCount:e,hccAuto:!1},"onCarouselTypeChange")'
+        ),
+        @(
+            'onClick:function(){const e=1===a?2:1;t.controls.carouselTypeChange(e)}',
+            'onClick:function(){const e=a>=4?1:a+1;t.controls.carouselTypeChange(e)}'
+        ),
+        @(
+            '2===a&&Bb.carouselIcon__active',
+            '1<a&&Bb.carouselIcon__active'
+        ),
+        @(
+            'return qs(2===e?t.double:t.single)',
+            'return qs(1<e?t.double:t.single)'
+        ),
+        @(
+            'n(2!==t?{visibleSlots:Math.ceil(s/a),cardWidth:a,carouselRows:t}:{visibleSlots:Math.ceil(s/a*t),cardWidth:a,carouselRows:t})',
+            'n(1===t?{visibleSlots:Math.ceil(s/a),cardWidth:a,carouselRows:t}:{visibleSlots:Math.ceil(s/a*t),cardWidth:a,carouselRows:t})'
+        ),
+        @(
+            'b=function(e){return(0,Tr.useMemo)(()=>{const t=[];for(let a=0;a<e.length;a+=2)t.push(e.slice(a,a+2));return 1===t.at(-1)?.length&&t.at(-1)?.push(Lx),t},[e])}(v);',
+            'b=function(e){return(0,Tr.useMemo)(()=>{const t=[];for(let a=0;a<e.length;a+=_)t.push(e.slice(a,a+_));const n=t.at(-1);if(n)for(;n.length<_;)n.push(Lx);return t},[e,_])}(v);'
+        ),
+        @(
+            'function(e,t,a,s,n){const r=2===s;function i(s)',
+            'function(e,t,a,s,n){const r=1<s;function i(s)'
+        ),
+        @(
+            'totalElements:2===_?b.length:v.length',
+            'totalElements:1<_?b.length:v.length'
+        ),
+        @(
+            'return 2===_?',
+            'return 1<_?'
+        ),
+        @(
+            'classNames:{base:ta(iy,x&&oy),element:ta(ly,t&&cy)}',
+            'classNames:{base:ta(iy,x&&oy),element:ta(ly,t&&cy,3===_&&"hcc-native-carousel--3",4===_&&"hcc-native-carousel--4")}'
+        ),
+        @(
+            'className:ta(Vq,2===s&&$q)',
+            'className:ta(Vq,2===s&&$q,3===s&&"hcc-native-carousel-page--3",4===s&&"hcc-native-carousel-page--4")'
+        )
+    )
+}
+else {
+    $replacements = @(
     @(
         'r={...t.primitives(["defaultFilters"])},',
         'r={...t.primitives(["defaultFilters","hccCarouselAuto","hccSortJson"])},'
@@ -121,7 +217,8 @@ $replacements = @(
         'className:l(rW,2===s&&oW)',
         'className:l(rW,1<s&&oW,3===s&&"hcc-native-carousel-page--3",4===s&&"hcc-native-carousel-page--4")'
     )
-)
+    )
+}
 
 foreach ($replacement in $replacements) {
     $from = $replacement[0]

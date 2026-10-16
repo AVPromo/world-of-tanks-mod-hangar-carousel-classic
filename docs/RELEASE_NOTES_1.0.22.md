@@ -1,0 +1,4 @@
+- Add WoT 2.4.1.0 support for the relocated main, Comp 7, and vehicle-tooltip bundles.
+- Update runtime compatibility checks, build paths, and package validation for both 2.4.1.0 and 2.4.0.x layouts.
+- Require OpenWG GameFace 1.2.2 or newer for WoT 2.4.1.0 full packages.
+- Verified package contents and native bundle patch points against the installed WoT 2.4.1.0 client. In-game hangar testing remains pending.

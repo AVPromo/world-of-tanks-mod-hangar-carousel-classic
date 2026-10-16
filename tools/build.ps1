@@ -50,6 +50,47 @@ function Resolve-GameRoot {
 
 $GameRoot = Resolve-GameRoot -PreferredRoot $GameRoot
 
+Add-Type -AssemblyName System.IO.Compression
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+function Resolve-NativeEntryPath {
+    param(
+        [Parameter(Mandatory = $true)] [string]$PackageName,
+        [Parameter(Mandatory = $true)] [string]$CurrentEntry,
+        [Parameter(Mandatory = $true)] [string]$LegacyEntry
+    )
+
+    $packagePath = Join-Path $GameRoot ('res\packages\' + $PackageName)
+    $zip = [IO.Compression.ZipFile]::OpenRead($packagePath)
+    try {
+        if ($zip.GetEntry($CurrentEntry)) {
+            return $CurrentEntry
+        }
+        if ($zip.GetEntry($LegacyEntry)) {
+            return $LegacyEntry
+        }
+    }
+    finally {
+        $zip.Dispose()
+    }
+    throw "Native resource entry not found in $packagePath."
+}
+
+$mainEntry = Resolve-NativeEntryPath `
+    -PackageName 'gui-part2.pkg' `
+    -CurrentEntry 'gui/gameface/_dist/production/mono/hangar/main/bundle.js' `
+    -LegacyEntry 'gui/gameface/_dist/production/mono/hangar/views/main/main.html/bundle.js'
+$comp7Entry = Resolve-NativeEntryPath `
+    -PackageName 'comp7.pkg' `
+    -CurrentEntry 'comp7/gui/gameface/_dist/production/mono/lobby/hangar/bundle.js' `
+    -LegacyEntry 'comp7/gui/gameface/_dist/production/mono/lobby/views/hangar/hangar.html/bundle.js'
+$tooltipEntry = Resolve-NativeEntryPath `
+    -PackageName 'gui-part1.pkg' `
+    -CurrentEntry 'gui/gameface/_dist/production/mono/hangar/vehicle_tooltip/bundle.js' `
+    -LegacyEntry 'gui/gameface/_dist/production/mono/hangar/views/vehicle_tooltip/vehicle_tooltip.html/bundle.js'
+$mainBundleOutput = Join-Path $stage ('res\' + $mainEntry.Replace('/', '\'))
+$comp7BundleOutput = Join-Path $stage ('res\' + $comp7Entry.Replace('/', '\'))
+$tooltipBundleOutput = Join-Path $stage ('res\' + $tooltipEntry.Replace('/', '\'))
+
 if (-not $Python27) {
     $Python27 = & (Join-Path $PSScriptRoot 'bootstrap-python27.ps1')
 }
@@ -63,9 +104,9 @@ New-Item -ItemType Directory -Force -Path `
     (Join-Path $stage 'res\scripts\client\gui\mods'), `
     (Join-Path $stage 'res\gui\gen_resources'), `
     (Join-Path $stage 'res\gui\gameface\mods\hcc\hangar_carousel_classic'), `
-    (Join-Path $stage 'res\gui\gameface\_dist\production\mono\hangar\views\main\main.html'), `
-    (Join-Path $stage 'res\comp7\gui\gameface\_dist\production\mono\lobby\views\hangar\hangar.html'), `
-    (Join-Path $stage 'res\gui\gameface\_dist\production\mono\hangar\views\vehicle_tooltip\vehicle_tooltip.html'), `
+    (Split-Path -Parent $mainBundleOutput), `
+    (Split-Path -Parent $comp7BundleOutput), `
+    (Split-Path -Parent $tooltipBundleOutput), `
     (Join-Path $stage 'res\gui\gameface\_dist\production\mono\hangar\vehicle_tooltip'), `
     $dist | Out-Null
 
@@ -94,13 +135,13 @@ Copy-Item -LiteralPath (Join-Path $repo 'res\gui\gameface\mods\hcc\hangar_carous
     -Destination (Join-Path $stage 'res\gui\gameface\mods\hcc\hangar_carousel_classic\hangar_carousel_classic.tooltip.css')
 & (Join-Path $PSScriptRoot 'patch-native-carousel.ps1') `
     -GameRoot $GameRoot `
-    -OutputPath (Join-Path $stage 'res\gui\gameface\_dist\production\mono\hangar\views\main\main.html\bundle.js')
+    -OutputPath $mainBundleOutput
 & (Join-Path $PSScriptRoot 'patch-native-comp7-carousel.ps1') `
     -GameRoot $GameRoot `
-    -OutputPath (Join-Path $stage 'res\comp7\gui\gameface\_dist\production\mono\lobby\views\hangar\hangar.html\bundle.js')
+    -OutputPath $comp7BundleOutput
 & (Join-Path $PSScriptRoot 'patch-native-tooltip.ps1') `
     -GameRoot $GameRoot `
-    -BundleOutputPath (Join-Path $stage 'res\gui\gameface\_dist\production\mono\hangar\views\vehicle_tooltip\vehicle_tooltip.html\bundle.js') `
+    -BundleOutputPath $tooltipBundleOutput `
     -CssOutputPath (Join-Path $stage 'res\gui\gameface\_dist\production\mono\hangar\vehicle_tooltip\vehicle_tooltip.css') `
     -ScriptPath (Join-Path $repo 'res\gui\gameface\mods\hcc\hangar_carousel_classic\hangar_carousel_classic.tooltip.js') `
     -StylePath (Join-Path $repo 'res\gui\gameface\mods\hcc\hangar_carousel_classic\hangar_carousel_classic.tooltip.css')
@@ -119,7 +160,7 @@ if ($LASTEXITCODE -ne 0) {
 
 & (Join-Path $PSScriptRoot 'validate.ps1') -PackagePath $packagePath
 & (Join-Path $PSScriptRoot 'validate.ps1') -PackagePath $packagePathUnversioned
-& (Join-Path $PSScriptRoot 'build-full.ps1') -PackagePath $packagePath -Version $version
+& (Join-Path $PSScriptRoot 'build-full.ps1') -PackagePath $packagePath -Version $version -GameRoot $GameRoot
 if ($Install) {
     & (Join-Path $PSScriptRoot 'install.ps1') -GameRoot $GameRoot -PackagePath $packagePath
 }
